@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-
+using UnityEngine.SceneManagement;
 public class BulletBuffNormal : BulletBuff
 {
     public GameObject bulletPrefab;     // 主子弹预制体
@@ -57,6 +57,14 @@ public class BulletBuffNormal : BulletBuff
                 Vector2 rotatedDir = Quaternion.Euler(0, 0, angleOffset) * dir;
 
                 GameObject bulletObj = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
+
+                // ★ 强制子弹留在战斗场景
+                Scene battleScene = SceneManager.GetSceneByName("BattleScene");
+                if (battleScene.IsValid())
+                {
+                    SceneManager.MoveGameObjectToScene(bulletObj, battleScene);
+                }
+
                 Bullet bullet = bulletObj.GetComponent<Bullet>();
                 bullet.Init(rotatedDir, damage, penetration, bounceTimes, subBulletCount, subBulletDamage);
             }

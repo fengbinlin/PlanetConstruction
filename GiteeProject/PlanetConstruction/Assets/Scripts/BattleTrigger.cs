@@ -5,26 +5,37 @@ public class BattleTrigger : MonoBehaviour
 {
     public string battleSceneName = "BattleScene"; // 战斗场景名称
     public GameObject obstacle; // 战斗胜利后要删除的阻挡物
+    public GameObject playerpos;
 
-    // 用于记录战斗结果
-    public static bool battleWin = false;
-    public static bool battleFinished = false;
+    private bool battleWin = false;
+    private bool battleFinished = false;
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
         {
-            // 进入战斗，加载战斗场景（叠加加载）
+            collision.gameObject.transform.position = playerpos.transform.position;
+
+            // 记录这个关卡是当前战斗触发点
+            MainRoot.instance.currentTrigger = this;
+
+            // 进入战斗场景（叠加加载）
             SceneManager.LoadScene(battleSceneName, LoadSceneMode.Additive);
+            MainRoot.instance.MainScene.gameObject.SetActive(false);
         }
+    }
+
+    public void SetBattleResult(bool win)
+    {
+        battleWin = win;
+        battleFinished = true;
     }
 
     void Update()
     {
-        // 检查战斗是否结束
         if (battleFinished)
         {
-            battleFinished = false; // 重置状态
+            battleFinished = false;
 
             if (battleWin)
             {

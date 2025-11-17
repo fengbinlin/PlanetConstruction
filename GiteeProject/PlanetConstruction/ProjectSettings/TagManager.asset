@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - floor
+  - MainSceneObject
   layers:
   - Default
   - TransparentFX

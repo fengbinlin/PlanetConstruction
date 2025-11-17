@@ -116,14 +116,14 @@ public class MiningController : MonoBehaviour
             .OrderBy(slot => Vector3.Distance(transform.position, slot.transform.position))
             .FirstOrDefault();
         
-        if (nearestEmptySlot != null)
+        if (nearestEmptySlot != null&&GameValManager.gameValManager.valMoney>50)
         {
             Debug.Log($"找到最近空插槽: {nearestEmptySlot.name}, 距离: {Vector3.Distance(transform.position, nearestEmptySlot.transform.position):F2}");
-            
+            GameValManager.gameValManager.GetMoney(-50);
             // 在插槽位置生成矿机
             GameObject miningMachineObj = Instantiate(miningMachinePrefab, 
                 nearestEmptySlot.transform.position, 
-                nearestEmptySlot.transform.rotation);
+                nearestEmptySlot.transform.rotation,MainRoot.instance.MainScene.gameObject.transform);
             
             // 确保矿机有MiningMachine组件
             MiningMachine miningMachine = miningMachineObj.GetComponent<MiningMachine>();
