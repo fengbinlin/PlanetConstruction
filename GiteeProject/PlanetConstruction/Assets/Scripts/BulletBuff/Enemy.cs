@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using DamageNumbersPro.Demo;
 
 public class Enemy : MonoBehaviour
 {
@@ -34,6 +35,7 @@ public class Enemy : MonoBehaviour
 
     public void TakeDamage(float dmg)
     {
+        DNP_2DDemo.instance.CreateDamageNumber(transform.position+=new Vector3(0,0,0),dmg);
         hp -= dmg;
 
         // 调用受击反馈

@@ -45,6 +45,8 @@ public class Bullet : MonoBehaviour
         }
         // 如果目标是 null，不改变方向，继续飞行
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
+        
+
     }
 
     Enemy FindClosestEnemy()
@@ -97,7 +99,11 @@ public class Bullet : MonoBehaviour
             .Take(subBulletCount)
             .ToList();
 
-        if (validTargets.Count == 0) return;
+        if (validTargets.Count == 0)
+        {
+            Destroy(gameObject);
+           return; 
+        } 
 
         foreach (var target in validTargets)
         {

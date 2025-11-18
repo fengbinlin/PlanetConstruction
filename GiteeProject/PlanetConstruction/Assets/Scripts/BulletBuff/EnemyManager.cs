@@ -49,12 +49,20 @@ public class EnemyManager : MonoBehaviour
         GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
         Vector3 pos = new Vector3(spawnX, Random.Range(spawnRangeY.x, spawnRangeY.y), 0);
         GameObject enemyObj = Instantiate(prefab, pos, Quaternion.identity);
-
+        enemyObj.GetComponent<Enemy>().hp=currentEnemyHP;
         // ★ 强制敌人留在战斗场景
         Scene battleScene = SceneManager.GetSceneByName("BattleScene");
         if (battleScene.IsValid())
         {
-            SceneManager.MoveGameObjectToScene(enemyObj, battleScene);
+            try
+            {
+                 SceneManager.MoveGameObjectToScene(enemyObj, battleScene);
+            }
+            catch
+            {
+                GameObject.Destroy(enemyObj);
+            }
+           
         }
 
         Enemy enemy = enemyObj.GetComponent<Enemy>();

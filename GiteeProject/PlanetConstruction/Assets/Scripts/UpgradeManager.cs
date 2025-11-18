@@ -10,7 +10,7 @@ public class UpgradeManager : MonoBehaviour
     public UpgradeCardUI[] cardSlots; // 卡牌按钮UI脚本
 
     private BulletBuffNormal targetBuff;
-
+    private List<BulletBuffNormal> targetBuffs;
     void Awake()
     {
         Instance = this;
@@ -18,9 +18,9 @@ public class UpgradeManager : MonoBehaviour
     }
 
     // 显示升级选项
-    public void ShowUpgradeCards(BulletBuffNormal buff)
+    public void ShowUpgradeCards(List<BulletBuffNormal> buffs)
     {
-        targetBuff = buff;
+        targetBuffs = buffs;
         upgradePanel.SetActive(true);
 
         // 获取全部候选卡牌
@@ -49,7 +49,11 @@ public class UpgradeManager : MonoBehaviour
     // 选择一张卡牌
     void OnCardSelected(UpgradeCard card)
     {
-        card.Apply(targetBuff);
+        // 对列表中的所有Buff应用升级
+        foreach (var buff in targetBuffs)
+        {
+            card.Apply(buff);
+        }
         upgradePanel.SetActive(false);
 
         // 恢复游戏

@@ -420,8 +420,8 @@ Transform:
   m_GameObject: {fileID: 128381142}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -577.9416, y: -380.91565, z: -0.51142323}
-  m_LocalScale: {x: 3.0168176, y: 4.6741924, z: 1.4934}
+  m_LocalPosition: {x: -577.8587, y: -380.91565, z: -0.51142323}
+  m_LocalScale: {x: 3.1827424, y: 4.6741924, z: 1.4934}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1586171227}
@@ -2126,7 +2126,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0

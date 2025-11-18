@@ -15,10 +15,10 @@ public class BattleValManager : MonoBehaviour
     public Text textExp;
     public Slider expSlider; // 等级进度条
 
-    public BulletBuffNormal bulletBuff;
+    public List<BulletBuffNormal> bulletBuffs; // 改为Buff列表
 
     // 玩家生命值
-    public float playerHP = 100f;    
+    public float playerHP = 100f;
     public float maxPlayerHP = 100f; // 最大血量
     public Slider playerHpSlider;    // ★ 新增：玩家血量条
 
@@ -31,6 +31,28 @@ public class BattleValManager : MonoBehaviour
     {
         UpdateUI();
     }
+    // 添加Buff到列表的方法
+    public void AddBulletBuff(BulletBuffNormal newBuff)
+    {
+        if (bulletBuffs == null)
+        {
+            bulletBuffs = new List<BulletBuffNormal>();
+        }
+
+        if (!bulletBuffs.Contains(newBuff))
+        {
+            bulletBuffs.Add(newBuff);
+        }
+    }
+
+    // 从列表移除Buff的方法
+    public void RemoveBulletBuff(BulletBuffNormal buffToRemove)
+    {
+        if (bulletBuffs != null && bulletBuffs.Contains(buffToRemove))
+        {
+            bulletBuffs.Remove(buffToRemove);
+        }
+    }
 
     public void GainExp(int amount)
     {
@@ -39,7 +61,7 @@ public class BattleValManager : MonoBehaviour
         {
             Level++;
             curExp = 0;
-            LevelUpExp = Mathf.RoundToInt(LevelUpExp * 1.3f);
+            LevelUpExp = Mathf.RoundToInt(LevelUpExp * 1.4f);
             UpdateUI();
 
             // 检查是否胜利
@@ -49,7 +71,7 @@ public class BattleValManager : MonoBehaviour
                 return;
             }
 
-            UpgradeManager.Instance.ShowUpgradeCards(bulletBuff);
+            UpgradeManager.Instance.ShowUpgradeCards(bulletBuffs);
         }
         else
         {

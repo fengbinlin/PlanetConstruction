@@ -119,7 +119,7 @@
       "url": "https://packages.unity.cn"
     },
     "com.unity.burst": {
-      "version": "1.8.17",
+      "version": "1.8.18",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -285,7 +285,7 @@
       "url": "https://packages.unity.cn"
     },
     "com.unity.textmeshpro": {
-      "version": "3.0.7",
+      "version": "3.0.9",
       "depth": 0,
       "source": "registry",
       "dependencies": {
