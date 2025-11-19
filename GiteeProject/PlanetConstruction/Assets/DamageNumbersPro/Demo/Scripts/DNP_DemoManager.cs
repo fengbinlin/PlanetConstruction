@@ -65,32 +65,32 @@ namespace DamageNumbersPro.Demo
 
         void Update()
         {
-            float scroll = DNP_InputHandler.GetMouseScroll();
-            if (scroll != 0 && (!Cursor.visible || DNP_Camera.instance == null))
-            {
-                if(scroll > 0.001f)
-                {
-                    currentIndex--;
+            // float scroll = DNP_InputHandler.GetMouseScroll();
+            // if (scroll != 0 && (!Cursor.visible || DNP_Camera.instance == null))
+            // {
+            //     if(scroll > 0.001f)
+            //     {
+            //         currentIndex--;
 
-                    if(currentIndex < 0)
-                    {
-                        currentIndex = prefabs.Length - 1;
-                    }
+            //         if(currentIndex < 0)
+            //         {
+            //             currentIndex = prefabs.Length - 1;
+            //         }
 
-                    UpdateCurrent();
-                }
-                else if(scroll < 0.001f)
-                {
-                    currentIndex++;
+            //         UpdateCurrent();
+            //     }
+            //     else if(scroll < 0.001f)
+            //     {
+            //         currentIndex++;
 
-                    if(currentIndex > prefabs.Length - 1)
-                    {
-                        currentIndex = 0;
-                    }
+            //         if(currentIndex > prefabs.Length - 1)
+            //         {
+            //             currentIndex = 0;
+            //         }
 
-                    UpdateCurrent();
-                }
-            }
+            //         UpdateCurrent();
+            //     }
+            // }
 
             if(fade != null)
             {

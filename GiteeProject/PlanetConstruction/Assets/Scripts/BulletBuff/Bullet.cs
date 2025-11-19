@@ -1,11 +1,13 @@
 using UnityEngine;
 using System.Linq;
+using System.Collections;
+using UnityEngine.SceneManagement;
 
-public class Bullet : MonoBehaviour
+public class Bullet : MonoBehaviour, IPoolable
 {
     public float speed = 10f;
-    public float trackingStrength = 2f; // 跟踪强度
-    public float trackingRange = 5f;    // 跟踪距离
+    public float trackingStrength = 2f;
+    public float trackingRange = 5f;
     private float damage;
     private int penetration;
     private int bounceTimes;
@@ -13,106 +15,346 @@ public class Bullet : MonoBehaviour
     private float subBulletDamage;
     private Vector2 direction;
 
+    private Enemy lockedTarget;
+    private bool hasValidTarget = false;
+    private Vector2 initialDirection;
+
     public GameObject subBulletPrefab;
+    public float dieTime = 3;
 
-    public float dieTime = 3; // 生命周期
+    private bool isProcessingHit = false;
+    private Coroutine autoRecycleCoroutine;
+    private bool isSubBullet = false;
 
-    public void Init(Vector2 dir, float dmg, int pen, int bounce, int subCount, float subDmg)
+    public void OnSpawnFromPool()
     {
+    }
+
+    public void OnReturnToPool()
+    {
+        if (autoRecycleCoroutine != null)
+        {
+            StopCoroutine(autoRecycleCoroutine);
+            autoRecycleCoroutine = null;
+        }
+
+        damage = 0;
+        penetration = 0;
+        bounceTimes = 0;
+        subBulletCount = 0;
+        subBulletDamage = 0;
+        direction = Vector2.zero;
+        lockedTarget = null;
+        hasValidTarget = false;
+        isProcessingHit = false;
+        isSubBullet = false;
+        initialDirection = Vector2.zero;
+        speed = 10f;
+        transform.rotation = Quaternion.identity;
+        transform.localScale = Vector3.one;
+    }
+
+    public void InitWithData(BulletData data)
+    {
+        speed = data.speed;
+        trackingStrength = data.trackingStrength;
+        trackingRange = data.trackingRange;
+        damage = data.damage;
+        penetration = data.penetration;
+        bounceTimes = data.bounceTimes;
+        subBulletCount = data.subBulletCount;
+        subBulletDamage = data.subBulletDamage;
+        dieTime = data.dieTime;
+        subBulletPrefab = data.subBulletPrefab;
+
+        if (data.direction == Vector2.zero)
+        {
+            direction = Vector2.right;
+        }
+        else
+        {
+            direction = data.direction.normalized;
+        }
+
+        initialDirection = direction;
+
+        if (data.lockTarget)
+        {
+            LockInitialTarget();
+        }
+
+        UpdateRotation();
+
+        if (autoRecycleCoroutine != null)
+        {
+            StopCoroutine(autoRecycleCoroutine);
+        }
+        autoRecycleCoroutine = StartCoroutine(AutoRecycle());
+    }
+
+    private IEnumerator AutoRecycle()
+    {
+        yield return new WaitForSeconds(dieTime);
+        RecycleSelf();
+    }
+
+    private void RecycleSelf()
+    {
+        if (ObjectPoolManager.Instance != null)
+        {
+            if (isSubBullet)
+            {
+                ObjectPoolManager.Instance.RecycleSubBullet(gameObject);
+            }
+            else
+            {
+                ObjectPoolManager.Instance.RecycleBullet(gameObject);
+            }
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    // 改动：增加 lockTarget 参数，控制是否自动找初始目标
+    public void Init(Vector2 dir, float dmg, int pen, int bounce, int subCount, float subDmg, bool lockTarget = true)
+    {
+        if (dir == Vector2.zero)
+        {
+            dir = Vector2.right;
+        }
+
         direction = dir.normalized;
+        initialDirection = direction;
         damage = dmg;
         penetration = pen;
         bounceTimes = bounce;
         subBulletCount = subCount;
         subBulletDamage = subDmg;
-        Destroy(gameObject, dieTime); // 自动销毁时间
+
+        if (lockTarget)
+        {
+            LockInitialTarget();
+        }
+
+        UpdateRotation();
+
+        if (autoRecycleCoroutine != null)
+        {
+            StopCoroutine(autoRecycleCoroutine);
+        }
+        autoRecycleCoroutine = StartCoroutine(AutoRecycle());
     }
 
     void Update()
     {
-        Enemy target = FindClosestEnemy();
-
-        if (target != null)
+        if (hasValidTarget)
         {
-            float dist = Vector2.Distance(transform.position, target.transform.position);
-
-            if (dist <= trackingRange)
+            if (lockedTarget == null || lockedTarget.hp <= 0)
             {
-                Vector2 targetDir = (target.transform.position - transform.position).normalized;
-                // 轻微转向目标方向
-                direction = Vector2.Lerp(direction, targetDir, trackingStrength * Time.deltaTime).normalized;
+                hasValidTarget = false;
+                direction = Vector2.right;   // 默认方向
+                UpdateRotation();
+            }
+            else
+            {
+                float dist = Vector2.Distance(transform.position, lockedTarget.transform.position);
+                if (dist <= trackingRange)
+                {
+                    Vector2 targetDir = (lockedTarget.transform.position - transform.position);
+                    if (targetDir.sqrMagnitude > 1f)
+                    {
+                        targetDir = targetDir.normalized;
+                        direction = Vector2.Lerp(direction, targetDir, trackingStrength * Time.deltaTime).normalized;
+                    }
+                }
+                else
+                {
+                    hasValidTarget = false;
+                }
             }
         }
-        // 如果目标是 null，不改变方向，继续飞行
-        transform.Translate(direction * speed * Time.deltaTime, Space.World);
-        
 
+        transform.Translate(direction * speed * Time.deltaTime, Space.World);
+        UpdateRotation();
     }
 
-    Enemy FindClosestEnemy()
+    void LockInitialTarget()
     {
-        if (EnemyManager.Instance == null || EnemyManager.Instance.enemies.Count == 0) return null;
+        if (EnemyManager.Instance == null || EnemyManager.Instance.enemies.Count == 0)
+        {
+            hasValidTarget = false;
+            return;
+        }
 
-        // 过滤掉空敌人或已死的敌人
         var validEnemies = EnemyManager.Instance.enemies
-            .Where(e => e != null && e.hp > 0) // 确认敌人还活着
+            .Where(e => e != null && e.hp > 0)
             .ToList();
 
-        if (validEnemies.Count == 0) return null;
+        if (validEnemies.Count == 0)
+        {
+            hasValidTarget = false;
+            return;
+        }
 
-        return validEnemies
+        lockedTarget = validEnemies
             .OrderBy(e => Vector2.Distance(transform.position, e.transform.position))
             .FirstOrDefault();
+
+        hasValidTarget = (lockedTarget != null);
+
+        if (hasValidTarget)
+        {
+            Vector2 targetDir = (lockedTarget.transform.position - transform.position);
+            if (targetDir.sqrMagnitude > 1f)
+            {
+                targetDir = targetDir.normalized;
+                direction = Vector2.Lerp(direction, targetDir, 0.3f).normalized;
+            }
+        }
+    }
+
+    void TryFindNewTarget()
+    {
+        if (EnemyManager.Instance == null)
+        {
+            hasValidTarget = false;
+            return;
+        }
+
+        var validEnemies = EnemyManager.Instance.enemies
+            .Where(e => e != null && e.hp > 0)
+            .ToList();
+
+        if (validEnemies.Count == 0)
+        {
+            hasValidTarget = false;
+            return;
+        }
+
+        lockedTarget = validEnemies
+            .OrderBy(e => Vector2.Distance(transform.position, e.transform.position))
+            .FirstOrDefault();
+
+        hasValidTarget = (lockedTarget != null);
+    }
+
+    void UpdateRotation()
+    {
+        if (direction != Vector2.zero)
+        {
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        }
     }
 
     void OnTriggerEnter2D(Collider2D collision)
     {
+        if (isProcessingHit) return;
+
         Enemy enemy = collision.GetComponent<Enemy>();
+        if (enemy == null) return;
 
-        if (enemy != null)
+        isProcessingHit = true;
+
+        enemy.TakeDamage(damage);
+
+        bool shouldBounce = bounceTimes > 0 && subBulletCount > 0;
+        if (shouldBounce)
         {
-            enemy.TakeDamage(damage);
+            Bounce(enemy);
+        }
 
-            // ✅ 无论穿透与否，都可生成副子弹
-            if (bounceTimes > 0 && subBulletCount > 0)
-            {
-                Bounce(enemy);
-            }
+        if (penetration > 0)
+        {
+            penetration--;
 
-            // 穿透逻辑
-            if (penetration > 0)
+            if (hasValidTarget && lockedTarget == enemy)
             {
-                penetration--; // 保留子弹，继续飞行
-            }
-            else
-            {
-                Destroy(gameObject);
+                TryFindNewTarget();
             }
         }
+        else
+        {
+            if (!shouldBounce)
+            {
+                RecycleSelf();
+            }
+        }
+
+        isProcessingHit = false;
     }
 
     void Bounce(Enemy hitEnemy)
     {
+        bounceTimes--;
+
         var validTargets = EnemyManager.Instance.enemies
-            .Where(e => e != null && e != hitEnemy && e.hp > 0) // 排除自己和已死敌人
+            .Where(e => e != null && e != hitEnemy && e.hp > 0)
             .OrderBy(e => Vector2.Distance(hitEnemy.transform.position, e.transform.position))
             .Take(subBulletCount)
             .ToList();
 
-        if (validTargets.Count == 0)
-        {
-            Destroy(gameObject);
-           return; 
-        } 
-
         foreach (var target in validTargets)
         {
-            Vector2 dir = (target.transform.position - hitEnemy.transform.position).normalized;
-            GameObject sBulletObj = Instantiate(subBulletPrefab, hitEnemy.transform.position, Quaternion.identity);
-            Bullet sBullet = sBulletObj.GetComponent<Bullet>();
+            Vector2 dir = (target.transform.position - hitEnemy.transform.position);
+            if (dir.sqrMagnitude > 1f)
+            {
+                dir = dir.normalized;
+            }
+            else
+            {
+                dir = Vector2.right;
+            }
 
-            // ✅ 副子弹也会重新找最近敌人来跟踪
-            sBullet.Init(dir, subBulletDamage, 0, bounceTimes - 1, subBulletCount, subBulletDamage);
+            GameObject sBulletObj = null;
+            if (ObjectPoolManager.Instance != null && ObjectPoolManager.Instance.subBulletPrefab != null)
+            {
+                sBulletObj = ObjectPoolManager.Instance.SpawnSubBullet(transform.position, Quaternion.identity);
+            }
+            else
+            {
+                sBulletObj = Instantiate(subBulletPrefab, transform.position, Quaternion.identity);
+            }
+
+            Scene currentScene = gameObject.scene;
+            if (currentScene.IsValid() && sBulletObj.scene != currentScene)
+            {
+                sBulletObj.transform.SetParent(null);
+                SceneManager.MoveGameObjectToScene(sBulletObj, currentScene);
+            }
+
+            Bullet sBullet = sBulletObj.GetComponent<Bullet>();
+            Collider2D collider = sBulletObj.GetComponent<Collider2D>();
+
+            if (sBullet != null)
+            {
+                sBullet.enabled = true;
+                sBullet.isSubBullet = true;
+            }
+            if (collider != null) collider.enabled = true;
+
+            sBulletObj.SetActive(true);
+
+            sBullet.Init(dir, subBulletDamage, 0, bounceTimes, subBulletCount, subBulletDamage, false);
         }
+
+        RecycleSelf();
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = hasValidTarget ? Color.green : Color.red;
+        Gizmos.DrawWireSphere(transform.position, trackingRange);
+
+        if (hasValidTarget && lockedTarget != null)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(transform.position, lockedTarget.transform.position);
+        }
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawRay(transform.position, direction * 2f);
     }
 }

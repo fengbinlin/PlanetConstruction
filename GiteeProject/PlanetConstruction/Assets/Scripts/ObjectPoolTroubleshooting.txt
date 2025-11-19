@@ -1,0 +1,193 @@
+========================================
+对象池系统故障排除
+========================================
+
+问题1：SceneManager.MoveGameObjectToScene 错误
+----------------------------------------
+
+错误信息：
+ArgumentException: Gameobject is not a root in a scene
+
+原因：
+从对象池生成的对象有父物体（poolParent），
+而 SceneManager.MoveGameObjectToScene() 要求对象必须是场景的根对象。
+
+解决方案：
+在调用 MoveGameObjectToScene() 之前，先设置父物体为 null
+
+修复代码示例：
+// 错误的做法
+SceneManager.MoveGameObjectToScene(bulletObj, battleScene);
+
+// 正确的做法
+bulletObj.transform.SetParent(null);
+SceneManager.MoveGameObjectToScene(bulletObj, battleScene);
+
+已修复的文件：
+✓ BulletBuffNormal.cs - 子弹生成
+✓ EnemyManager.cs - 敌人生成
+✓ Bullet.cs - 副子弹生成
+
+问题2：协程无法在非激活对象上启动
+----------------------------------------
+
+错误信息：
+Coroutine couldn't be started because the game object is inactive!
+
+原因：
+对象被回收后变为非激活状态，但可能仍会接收到碰撞事件，
+导致尝试在非激活对象上启动协程。
+
+解决方案：
+1. 添加 isDead 标志防止重复处理
+2. 在启动协程前检查对象是否激活
+3. 在 TakeDamage 中添加状态检查
+
+修复代码示例：
+public void TakeDamage(float dmg, Vector3 attackDirection)
+{
+    if (isDead || !gameObject.activeInHierarchy)
+    {
+        return;
+    }
+    
+    // 处理伤害...
+    
+    if (gameObject.activeInHierarchy)
+    {
+        hitFeedbackCoroutine = StartCoroutine(HitFeedback());
+    }
+}
+
+已修复的文件：
+✓ Enemy.cs - 添加 isDead 标志和激活状态检查
+
+========================================
+其他常见问题
+========================================
+
+问题1：击中敌人时同时出现主子弹和副子弹
+症状：弹射后，主子弹继续飞行，副子弹也生成了
+解决方案：
+- 已在版本 1.1.1 修复
+- Bounce() 现在会在生成副子弹后立即回收主子弹
+- 弹射后只有副子弹，主子弹不再继续
+
+问题2：副子弹从飞船射出
+症状：副子弹回收后再次生成时，带着错误的方向/速度
+解决方案：
+- 已在版本 1.1.1 修复
+- OnReturnToPool() 现在重置更多状态
+- 包括 initialDirection, speed, localScale
+
+问题3：对象池警告 - 对象已经在池中
+症状：Console 显示 "对象已经在池中，跳过重复回收！"
+解决方案：
+- 已在版本 1.1.1 修复，这是安全警告
+- ObjectPool 自动跳过重复回收
+- 如果频繁出现，检查代码是否多次调用 Recycle
+
+问题4：对象池警告 - 对象不属于此对象池
+症状：Console 显示 "对象不属于此对象池，无法回收！"
+解决方案：
+- 已在版本 1.1.1 修复，这是安全警告
+- 检查是否用错了回收方法
+- Bullet.cs 的 RecycleSelf() 会自动选择正确的池
+
+问题5：对象没有正确回收
+症状：对象数量持续增长
+解决方案：
+- 检查对象是否实现了 IPoolable 接口
+- 确保调用了 RecycleSelf() 或管理器的回收方法
+- 检查协程是否正确停止
+
+问题6：对象状态异常
+症状：重新使用的对象行为不正确
+解决方案：
+- 检查 OnReturnToPool() 是否清除了所有状态
+- 确保停止了所有协程
+- 重置所有变量到初始值
+
+问题7：池耗尽
+症状：Console 出现 "对象池已耗尽" 警告
+解决方案：
+- 增加对应池的初始大小
+- 确保 Allow Pool Expansion 已勾选
+- 检查对象是否正确回收
+
+问题4：预制体不匹配
+症状：生成的对象不是预期的类型
+解决方案：
+- 确保 ObjectPoolManager 中配置了正确的预制体
+- 检查预制体是否有对应的组件
+- 确保预制体实现了 IPoolable 接口
+
+========================================
+调试技巧
+========================================
+
+1. 检查对象池状态
+   - 在 Hierarchy 中展开 ObjectPoolManager/PooledObjects
+   - 查看各个池中的对象数量
+   - 观察对象的激活状态
+
+2. 使用 Debug.Log
+   添加日志来跟踪对象生命周期：
+   
+   public void OnSpawnFromPool()
+   {
+       Debug.Log($"Spawn: {gameObject.name}");
+   }
+   
+   public void OnReturnToPool()
+   {
+       Debug.Log($"Recycle: {gameObject.name}");
+   }
+
+3. 使用 Profiler
+   - Window → Analysis → Profiler
+   - 查看 GC Alloc 是否减少
+   - 查看 Instantiate 调用次数
+
+4. 检查场景归属
+   确保对象在正确的场景中：
+   
+   Debug.Log($"Object scene: {gameObject.scene.name}");
+
+========================================
+性能监控
+========================================
+
+预期性能指标：
+- GC Alloc 减少 70-90%
+- Instantiate 调用次数大幅减少
+- 帧率更稳定
+
+如何验证：
+1. 打开 Profiler
+2. 运行游戏 1-2 分钟
+3. 查看 CPU Usage → GC.Alloc
+4. 对比使用对象池前后的差异
+
+========================================
+更新日志
+========================================
+
+修复 1.1.1 - 弹射逻辑与对象池安全性
+- 修复弹射后主副子弹同时存在的问题
+- 完善 Bullet 状态重置，防止状态残留
+- 对象池增加重复回收和错误回收检测
+- 影响文件：Bullet.cs, ObjectPool.cs
+
+修复 1.0.2 - 协程激活状态检查
+- 修复了在非激活对象上启动协程的错误
+- 添加 isDead 标志防止重复死亡处理
+- 在启动协程前检查对象激活状态
+- 影响文件：Enemy.cs
+
+修复 1.0.1 - 场景移动错误
+- 修复了对象池对象无法移动到其他场景的问题
+- 在移动场景前自动清除父物体
+- 影响文件：BulletBuffNormal.cs, EnemyManager.cs, Bullet.cs
+
+========================================

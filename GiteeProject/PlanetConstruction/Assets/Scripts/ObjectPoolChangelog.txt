@@ -1,0 +1,178 @@
+========================================
+对象池系统更新日志
+========================================
+
+版本 1.1.1 - 2024
+----------------------------------------
+🐛 修复：弹射逻辑与对象池安全性
+
+修复的问题：
+1. 击中敌人时同时出现主子弹和副子弹
+2. 副子弹有时会从飞船射出（状态未完全重置）
+3. 对象可能被重复回收或错误回收到其他池
+
+文件修改：
+- Bullet.cs
+  修复 Bounce() - 弹射后立即回收主子弹
+  × 移除：弹射后主子弹继续飞行的逻辑
+  ✓ 现在：只有副子弹，主子弹被回收
+  
+  完善 OnReturnToPool() - 更全面的状态重置
+  + 重置 initialDirection
+  + 重置 speed
+  + 重置 transform.localScale
+  
+- ObjectPool.cs
+  + 添加 activeObjects (HashSet) - 追踪激活对象
+  + 添加 pooledObjects (HashSet) - 追踪池中对象
+  + 添加重复回收检测
+  + 添加非池对象检测
+  + 回收时自动 SetParent(parent)
+  + 新增 ActiveCount 属性
+  + 新增 TotalCount 属性
+
+安全改进：
+✓ 防止同一对象多次回收
+✓ 防止非池对象被错误回收
+✓ 弹射后只有副子弹，逻辑更清晰
+✓ 更完整的状态重置
+
+版本 1.1.0 - 2024
+----------------------------------------
+✨ 新功能：副子弹独立对象池支持
+
+新增内容：
++ ObjectPoolManager 支持副子弹预制体配置
++ 独立的副子弹池（SubBulletPool）
++ SpawnSubBullet() 和 RecycleSubBullet() API
++ Bullet.cs 自动识别主副子弹类型
++ 副子弹池大小可独立配置（默认100）
+
+文件修改：
+- ObjectPoolManager.cs
+  + 添加 subBulletPrefab 字段
+  + 添加 subBulletPoolSize 配置
+  + 新增 SUB_BULLET_POOL 常量
+  + InitializePools() 创建副子弹池
+  + SpawnSubBullet() 方法
+  + RecycleSubBullet() 方法
+
+- Bullet.cs
+  + 添加 isSubBullet 私有字段
+  + RecycleSelf() 根据类型选择回收池
+  + 副子弹生成时设置 isSubBullet = true
+  + OnReturnToPool() 重置 isSubBullet
+  + 副子弹生成使用 SpawnSubBullet()
+
+新增文档：
++ SubBulletPoolGuide.txt - 副子弹池详细指南
+
+性能提升：
+✓ 副子弹独立管理，避免池争用
+✓ 可为副子弹设置更大的池
+✓ 更精确的性能监控
+
+版本 1.0.2 - 2024
+----------------------------------------
+🐛 修复：协程激活状态检查
+
+问题：
+对象被回收后可能仍接收碰撞事件，导致在
+非激活对象上启动协程的错误。
+
+解决方案：
++ Enemy.cs 添加 isDead 标志
++ TakeDamage() 添加激活状态和死亡检查
++ Die() 防止重复死亡处理
++ Update() 跳过死亡对象
++ OnSpawnFromPool() 重置 isDead
++ OnReturnToPool() 设置 isDead
+
+影响文件：
+- Enemy.cs
+
+版本 1.0.1 - 2024
+----------------------------------------
+🐛 修复：场景移动错误
+
+问题：
+从对象池生成的对象有父物体，无法使用
+SceneManager.MoveGameObjectToScene() 移动。
+
+解决方案：
+在移动场景前调用 transform.SetParent(null)
+
+影响文件：
+- BulletBuffNormal.cs
+- EnemyManager.cs
+- Bullet.cs
+
+版本 1.0.0 - 2024
+----------------------------------------
+🎉 初始版本：统一对象池系统
+
+核心功能：
++ 统一对象池管理器（ObjectPoolManager）
++ 通用对象池实现（ObjectPool）
++ IPoolable 接口定义
++ 支持主子弹、敌人、血迹对象池
++ 自动属性清除和重置
++ BulletData 支持属性克隆
++ 向后兼容设计
+
+创建的文件：
++ IPoolable.cs - 对象池接口
++ ObjectPool.cs - 通用对象池类
++ ObjectPoolManager.cs - 对象池管理器
++ BulletData.cs - 子弹数据类
++ ObjectPoolUsageExample.cs - 使用示例
++ ObjectPoolQuickStart.txt - 快速开始指南
++ ObjectPoolTroubleshooting.txt - 故障排除
+
+修改的文件：
+- Bullet.cs - 实现 IPoolable
+- Enemy.cs - 实现 IPoolable
+- BloodSplatter.cs - 实现 IPoolable
+- BulletBuffNormal.cs - 使用对象池
+- EnemyManager.cs - 使用对象池
+
+创建的文档页面：
++ 对象池系统使用指南.md - 完整文档
+
+========================================
+已知问题
+========================================
+
+无
+
+========================================
+计划功能
+========================================
+
+未来可能添加：
+□ 动态池大小调整
+□ 池使用率统计面板
+□ 预热（Prewarm）功能
+□ 多场景对象池共享
+□ 对象池性能分析工具
+
+========================================
+使用统计
+========================================
+
+对象池数量：4 个
+- BulletPool（主子弹）
+- SubBulletPool（副子弹）
+- EnemyPool（敌人）
+- BloodPool（血迹）
+
+支持的预制体：4 种
+支持的脚本：3 个（Bullet, Enemy, BloodSplatter）
+
+推荐池大小配置：
+- Bullet Pool: 50-100
+- Sub Bullet Pool: 100-200
+- Enemy Pool: 20-50
+- Blood Pool: 10-30
+
+========================================

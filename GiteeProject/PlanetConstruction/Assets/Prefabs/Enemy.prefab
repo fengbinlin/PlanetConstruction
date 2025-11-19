@@ -165,8 +165,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 8.46, y: 0.120819405, z: -0.044204146}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1953257741293838897}
   - {fileID: 5343557444957349742}
@@ -188,6 +188,9 @@ MonoBehaviour:
   speed: 0.5
   wallX: -6
   damageToPlayer: 10
+  knockbackForce: 0.2
+  knockbackDuration: 0.1
+  bloodSplatterPrefab: {fileID: 44802366759725839, guid: 5cf21b3174069144c9e9a6d83b162a6f, type: 3}
 --- !u!61 &5570054236392398000
 BoxCollider2D:
   m_ObjectHideFlags: 0

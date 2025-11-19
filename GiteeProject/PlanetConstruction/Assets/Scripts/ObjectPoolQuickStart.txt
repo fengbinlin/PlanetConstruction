@@ -1,0 +1,136 @@
+========================================
+对象池系统快速开始指南
+========================================
+
+5分钟快速设置
+----------------------------------------
+
+步骤1：添加管理器到场景
+1. 打开 BattleScene 场景
+2. 创建空物体：右键 Hierarchy → Create Empty
+3. 命名为 ObjectPoolManager
+4. 添加组件 ObjectPoolManager
+
+步骤2：配置预制体引用
+在 Inspector 中配置：
+- Bullet Prefab: 将你的主子弹预制体拖到这里
+- Sub Bullet Prefab: 将你的副子弹预制体拖到这里
+- Enemy Prefab: 将你的敌人预制体拖到这里
+- Blood Splatter Prefab: 将你的血迹预制体拖到这里
+
+预制体路径参考：
+- 主子弹：/Assets/Prefabs/Bullet.prefab
+- 副子弹：/Assets/Prefabs/SubBullet.prefab（或其他副子弹预制体）
+- 敌人：从 EnemyManager 的 enemyPrefabs 数组中选一个
+- 血迹：/Assets/Prefabs/BloodSplatter.prefab
+
+步骤3：调整池大小（可选）
+根据游戏需求调整：
+- Bullet Pool Size: 50（默认）- 主子弹池大小
+- Sub Bullet Pool Size: 100（默认）- 副子弹池大小（通常需要更大）
+- Enemy Pool Size: 30（默认）
+- Blood Splatter Pool Size: 20（默认）
+
+确保勾选 Allow Pool Expansion
+
+步骤4：保存场景
+按 Ctrl+S 保存场景
+
+========================================
+已创建的核心文件
+========================================
+
+1. IPoolable.cs - 对象池接口
+2. ObjectPool.cs - 通用对象池实现
+3. ObjectPoolManager.cs - 对象池管理器（单例）
+4. BulletData.cs - 子弹数据类（支持克隆）
+5. ObjectPoolUsageExample.cs - 使用示例
+
+已修改的文件：
+- Bullet.cs - 实现 IPoolable，支持属性清除，支持副子弹池
+- Enemy.cs - 实现 IPoolable，支持属性清除
+- BloodSplatter.cs - 实现 IPoolable，支持属性清除
+- BulletBuffNormal.cs - 使用对象池生成主子弹
+- EnemyManager.cs - 使用对象池生成敌人
+
+========================================
+主要功能特性
+========================================
+
+✓ 统一管理主子弹、副子弹、敌人、血迹对象池
+✓ 自动属性清除和重置
+✓ 支持子弹属性克隆（BulletData）
+✓ 向后兼容（无 ObjectPoolManager 时自动使用 Instantiate）
+✓ 可配置池大小和扩展策略
+✓ 自动回收机制
+✓ 副子弹独立池管理
+
+========================================
+使用示例
+========================================
+
+生成主子弹：
+GameObject bullet = ObjectPoolManager.Instance.SpawnBullet(pos, rot);
+bullet.GetComponent<Bullet>().Init(dir, dmg, pen, bounce, subCount, subDmg);
+
+生成副子弹（副子弹会自动从主子弹的 Bounce 逻辑中生成）：
+GameObject subBullet = ObjectPoolManager.Instance.SpawnSubBullet(pos, rot);
+subBullet.GetComponent<Bullet>().Init(dir, dmg, 0, bounce, 0, 0, false);
+
+生成敌人：
+GameObject enemy = ObjectPoolManager.Instance.SpawnEnemy(pos, rot);
+enemy.GetComponent<Enemy>().SetMaxHp(50f);
+
+生成血迹：
+ObjectPoolManager.Instance.SpawnBloodSplatter(pos, rot);
+
+使用 BulletData 克隆：
+BulletData data = BulletData.CreateDefault();
+data.damage = 20f;
+BulletData cloned = data.Clone();
+bullet.GetComponent<Bullet>().InitWithData(cloned);
+
+========================================
+性能优化建议
+========================================
+
+1. 合理设置池大小
+   - 根据同屏最大对象数量设置
+   - 主子弹池：50-100
+   - 副子弹池：100-200（副子弹通常数量更多）
+   - 敌人池：20-50（根据 maxCount）
+   - 血迹池：10-30
+
+2. 开启池扩展
+   - 开发阶段建议开启
+   - 发布前根据实际需求调整
+
+3. 监控性能
+   - 使用 Profiler 查看 GC Alloc
+   - 观察对象池使用情况
+   - 特别关注副子弹池的使用率
+
+========================================
+验证设置
+========================================
+
+运行游戏后，检查：
+1. Hierarchy 中的 ObjectPoolManager
+2. 展开 PooledObjects 查看三个子文件夹
+3. 观察对象的激活/回收状态
+4. 确认对象数量不会无限增长
+
+========================================
+常见问题
+========================================
+
+Q: 对象没有被回收？
+A: 检查预制体是否有对应的脚本组件，确保实现了 IPoolable 接口
+
+Q: 池耗尽警告？
+A: 增加池大小或确保 Allow Pool Expansion 已勾选
+
+Q: 对象行为异常？
+A: 检查 OnReturnToPool 是否正确清除了状态和停止了协程
+
+========================================

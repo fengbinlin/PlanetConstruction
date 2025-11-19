@@ -1,0 +1,197 @@
+========================================
+副子弹对象池使用指南
+========================================
+
+概述
+----------------------------------------
+副子弹现在使用独立的对象池进行管理，与主子弹分开，
+这样可以更好地控制不同类型子弹的池大小和性能。
+
+为什么需要独立的副子弹池？
+----------------------------------------
+1. 数量差异：副子弹通常比主子弹多得多
+   - 主子弹：玩家发射 + 武器 Buff
+   - 副子弹：弹射、穿透时产生，数量可能是主子弹的数倍
+
+2. 预制体不同：副子弹可能使用不同的预制体
+   - 不同的外观
+   - 不同的大小
+   - 不同的特效
+
+3. 性能优化：分离管理更灵活
+   - 可以为副子弹设置更大的池
+   - 独立监控副子弹使用情况
+   - 避免主副子弹抢占同一个池
+
+工作原理
+----------------------------------------
+
+1. 对象池区分
+   主子弹池：BulletPool
+   副子弹池：SubBulletPool
+
+2. 自动识别
+   Bullet.cs 内部使用 isSubBullet 标志：
+   - 主子弹：isSubBullet = false（默认）
+   - 副子弹：isSubBullet = true（生成时设置）
+
+3. 自动回收
+   RecycleSelf() 会根据 isSubBullet 自动选择正确的池：
+   - 主子弹 → RecycleBullet()
+   - 副子弹 → RecycleSubBullet()
+
+配置步骤
+----------------------------------------
+
+1. 在 BattleScene 中选中 ObjectPoolManager
+
+2. 在 Inspector 中配置：
+   [对象池预设]
+   - Bullet Prefab: 主子弹预制体
+   - Sub Bullet Prefab: 副子弹预制体 ← 新增
+   - Enemy Prefab: 敌人预制体
+   - Blood Splatter Prefab: 血迹预制体
+
+3. 调整池大小：
+   [对象池配置]
+   - Bullet Pool Size: 50-100
+   - Sub Bullet Pool Size: 100-200 ← 建议设置更大
+   - Enemy Pool Size: 30
+   - Blood Splatter Pool Size: 20
+
+如何找到副子弹预制体？
+----------------------------------------
+
+方法1：从 Bullet 脚本中查找
+1. 选中主子弹预制体
+2. 查看 Bullet 组件
+3. 找到 Sub Bullet Prefab 字段
+4. 将其拖到 ObjectPoolManager 的 Sub Bullet Prefab
+
+方法2：在 Project 窗口搜索
+1. 打开 Project 窗口
+2. 搜索 "SubBullet" 或 "副子弹"
+3. 找到对应的预制体
+4. 拖到 ObjectPoolManager 的 Sub Bullet Prefab
+
+代码实现细节
+----------------------------------------
+
+副子弹生成（在 Bullet.cs 的 Bounce 方法中）：
+
+GameObject sBulletObj = null;
+if (ObjectPoolManager.Instance != null && 
+    ObjectPoolManager.Instance.subBulletPrefab != null)
+{
+    // 使用副子弹池
+    sBulletObj = ObjectPoolManager.Instance.SpawnSubBullet(
+        transform.position, Quaternion.identity);
+}
+else
+{
+    // 回退到 Instantiate
+    sBulletObj = Instantiate(subBulletPrefab, 
+        transform.position, Quaternion.identity);
+}
+
+// 标记为副子弹
+if (sBullet != null)
+{
+    sBullet.isSubBullet = true;
+}
+
+副子弹回收（自动）：
+
+private void RecycleSelf()
+{
+    if (ObjectPoolManager.Instance != null)
+    {
+        if (isSubBullet)
+        {
+            // 回收到副子弹池
+            ObjectPoolManager.Instance.RecycleSubBullet(gameObject);
+        }
+        else
+        {
+            // 回收到主子弹池
+            ObjectPoolManager.Instance.RecycleBullet(gameObject);
+        }
+    }
+    else
+    {
+        Destroy(gameObject);
+    }
+}
+
+验证设置
+----------------------------------------
+
+运行游戏后，检查 Hierarchy：
+
+ObjectPoolManager
+└── PooledObjects
+    ├── Bullets (主子弹)
+    │   └── Bullet(Clone) x 50
+    ├── SubBullets (副子弹) ← 新增
+    │   └── SubBullet(Clone) x 100
+    ├── Enemies (敌人)
+    │   └── Enemy(Clone) x 30
+    └── BloodSplatters (血迹)
+        └── BloodSplatter(Clone) x 20
+
+观察副子弹池：
+1. 发射子弹，触发弹射
+2. 观察 SubBullets 文件夹
+3. 激活的副子弹会移出文件夹
+4. 回收的副子弹会返回文件夹
+
+性能建议
+----------------------------------------
+
+1. 推荐池大小
+   根据游戏测试调整：
+   - 弹射次数少：Sub Bullet Pool Size = 50-100
+   - 弹射次数多：Sub Bullet Pool Size = 100-200
+   - 多把武器 + 高弹射：Sub Bullet Pool Size = 200-300
+
+2. 监控方法
+   打开 Profiler（Window → Analysis → Profiler）
+   观察：
+   - SubBullets 文件夹中的对象数量
+   - 如果对象数量持续增长 → 池太小，需要扩大
+   - 如果对象数量稳定 → 池大小合适
+
+3. 优化技巧
+   - 开发阶段开启 Allow Pool Expansion
+   - 记录最大同时存在的副子弹数量
+   - 将 Sub Bullet Pool Size 设置为最大数量的 1.2-1.5 倍
+
+常见问题
+----------------------------------------
+
+Q1: 副子弹没有使用对象池？
+A: 检查 ObjectPoolManager 的 Sub Bullet Prefab 是否已配置
+
+Q2: 副子弹回收到了主子弹池？
+A: 确保副子弹生成时正确设置了 isSubBullet = true
+
+Q3: 副子弹池耗尽？
+A: 增加 Sub Bullet Pool Size 或确保 Allow Pool Expansion 已勾选
+
+Q4: 主子弹和副子弹使用同一个预制体可以吗？
+A: 可以，但建议配置不同预制体以便区分和独立管理
+
+兼容性
+----------------------------------------
+
+如果不配置 Sub Bullet Prefab：
+- 系统会自动回退到 Instantiate
+- 不会报错
+- 但无法享受对象池的性能优化
+
+如果场景中没有 ObjectPoolManager：
+- 所有子弹都使用 Instantiate
+- 不影响游戏运行
+- 便于逐步迁移
+
+========================================

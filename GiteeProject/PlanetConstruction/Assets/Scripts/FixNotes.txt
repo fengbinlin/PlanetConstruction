@@ -1,0 +1,174 @@
+========================================
+对象池系统 - 修复说明
+========================================
+
+修复 1.1.1 - 弹射逻辑与对象池安全性
+----------------------------------------
+
+修复的问题：
+1. 击中敌人时同时出现主子弹和副子弹
+2. 副子弹有时会从飞船射出（状态未完全重置）
+3. 对象可能被重复回收或错误回收
+
+解决方案：
+
+1. Bullet.cs - 修复弹射逻辑
+   问题原因：弹射后，如果主子弹还有穿透次数，
+   它会继续飞行，导致主副子弹同时存在。
+   
+   修复：Bounce() 方法在生成副子弹后立即回收主子弹
+   - 移除了弹射后主子弹继续飞行的逻辑
+   - 现在弹射后只有副子弹，主子弹被回收
+   
+   代码变更：
+   void Bounce(Enemy hitEnemy)
+   {
+       // ... 生成副子弹 ...
+       RecycleSelf(); // 直接回收主子弹
+   }
+
+2. Bullet.cs - 完善状态重置
+   问题原因：回收时没有完全重置所有状态
+   
+   新增重置：
+   - initialDirection 重置为 Vector2.zero
+   - speed 重置为默认值 10f
+   - transform.localScale 重置为 Vector3.one
+   
+   防止副子弹带着主子弹的方向和速度飞行。
+
+3. ObjectPool.cs - 防止重复回收和错误回收
+   问题原因：没有追踪对象状态，可能重复回收
+   
+   新增字段：
+   - HashSet<GameObject> activeObjects - 追踪激活对象
+   - HashSet<GameObject> pooledObjects - 追踪池中对象
+   
+   新增检查：
+   - 检查对象是否已在池中（防止重复回收）
+   - 检查对象是否属于此池（防止错误回收）
+   - 回收时自动 SetParent(parent)
+   
+   新增属性：
+   - ActiveCount - 当前激活的对象数量
+   - TotalCount - 总对象数量
+   
+   安全机制：
+   public void Recycle(GameObject obj)
+   {
+       if (pooledObjects.Contains(obj))
+       {
+           Debug.LogWarning("已经在池中，跳过重复回收！");
+           return;
+       }
+       if (!activeObjects.Contains(obj))
+       {
+           Debug.LogWarning("不属于此对象池，无法回收！");
+           return;
+       }
+       // ... 正常回收 ...
+   }
+
+影响的文件：
+- Bullet.cs
+- ObjectPool.cs
+
+更新 1.1.0 - 添加副子弹对象池支持
+----------------------------------------
+
+新增功能：
+副子弹现在使用独立的对象池管理，提升性能。
+
+修改内容：
+
+1. ObjectPoolManager.cs - 添加副子弹池
+   - 新增 subBulletPrefab 字段
+   - 新增 subBulletPoolSize 配置（默认100）
+   - 新增 SpawnSubBullet() 方法
+   - 新增 RecycleSubBullet() 方法
+   - 初始化时创建 SubBullets 池
+
+2. Bullet.cs - 支持副子弹池
+   - 添加 isSubBullet 标志区分主子弹和副子弹
+   - RecycleSelf() 根据类型调用不同回收方法
+   - 副子弹生成时标记 isSubBullet = true
+   - 副子弹生成使用 SpawnSubBullet()
+   - OnReturnToPool() 重置 isSubBullet
+
+配置说明：
+在 ObjectPoolManager 的 Inspector 中：
+- Sub Bullet Prefab: 拖入副子弹预制体
+- Sub Bullet Pool Size: 建议设置为 100-200
+
+修复 1.0.2 - 协程激活状态检查
+----------------------------------------
+
+问题：
+错误：Coroutine couldn't be started because the 
+game object 'Enemy(Clone)' is inactive!
+
+对象被回收后变为非激活状态，但仍可能接收碰撞事件，
+导致尝试在非激活对象上启动协程。
+
+修复内容：
+
+1. Enemy.cs - 添加 isDead 标志
+   private bool isDead = false;
+
+2. OnSpawnFromPool() - 重置死亡标志
+   isDead = false;
+
+3. OnReturnToPool() - 设置死亡标志
+   isDead = true;
+
+4. TakeDamage() - 添加检查
+   if (isDead || !gameObject.activeInHierarchy)
+   {
+       return;
+   }
+   
+   // 启动协程前检查激活状态
+   if (gameObject.activeInHierarchy)
+   {
+       hitFeedbackCoroutine = StartCoroutine(HitFeedback());
+   }
+
+5. Die() - 防止重复死亡
+   if (isDead) return;
+   isDead = true;
+
+6. Update() - 跳过死亡对象
+   if (isDead) return;
+
+修复 1.0.1 - 场景移动错误
+----------------------------------------
+
+问题：
+错误：ArgumentException: Gameobject is not a root in a scene
+
+从对象池生成的对象有父物体，导致无法使用 
+SceneManager.MoveGameObjectToScene() 移动到其他场景。
+
+修复内容：
+
+1. BulletBuffNormal.cs（第88行）
+   在移动场景前添加：
+   bulletObj.transform.SetParent(null);
+
+2. EnemyManager.cs（第66行）
+   在移动场景前添加：
+   enemyObj.transform.SetParent(null);
+
+3. Bullet.cs（副子弹生成）
+   添加场景移动逻辑，确保副子弹在正确的场景中。
+
+现在状态
+----------------------------------------
+✅ 所有场景移动错误已修复
+✅ 协程启动错误已修复
+✅ 对象死亡状态正确管理
+✅ 向后兼容性保持
+
+可以正常运行游戏了！
+
+========================================
