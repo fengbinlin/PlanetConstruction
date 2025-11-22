@@ -1,10 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class BattleValManager : MonoBehaviour
 {
+    public GameObject MainUIObject;
+    public GameObject GameWinObject;
+    public GameObject GameFailObject;
     public static BattleValManager Instance;
 
     public int Level = 1;
@@ -67,7 +71,12 @@ public class BattleValManager : MonoBehaviour
             // 检查是否胜利
             if (Level >= 10)
             {
-                FindObjectOfType<BattleSceneController>().OnWinButton();
+                //获胜，暂停时间，然后把胜利UI调出来,主UI关闭
+                //FindObjectOfType<BattleSceneController>().OnWinButton();
+                Time.timeScale = 0f;
+                MainUIObject.SetActive(false);
+                GameFailObject.SetActive(false);
+                GameWinObject.SetActive(true);
                 return;
             }
 
@@ -86,9 +95,12 @@ public class BattleValManager : MonoBehaviour
         {
             playerHP = 0;
             UpdateUI();
-
-            // 游戏失败
-            FindObjectOfType<BattleSceneController>().OnLoseButton();
+            Time.timeScale = 0f;
+            // 游戏失败，把失败UI显示出来
+            MainUIObject.SetActive(false);
+            GameFailObject.SetActive(true);
+            GameWinObject.SetActive(false);
+            //FindObjectOfType<BattleSceneController>().OnLoseButton();
         }
         else
         {

@@ -5,7 +5,8 @@ using UnityEngine;
 public class Ore : MonoBehaviour
 {
     [Header("矿石设置")]
-    public List<MiningSlot> miningSlots;
+    public List<MiningMachine> MiningMachines;
+    
     public int mineValue = 1; // 每次挖掘获得的金币数
     
     public void Mine(int outputMultiplier=1)
