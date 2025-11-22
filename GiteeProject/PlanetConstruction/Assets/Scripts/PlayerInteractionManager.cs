@@ -108,6 +108,7 @@ public class PlayerInteractionManager : MonoBehaviour
     /// </summary>
     private void HideSpaceshipUI()
     {
+        GameUIManager.instance.TechnologyLabUI.SetActive(false);
         if (spaceshipUICanvasGroup == null) return;
 
         // 停止当前正在运行的动画

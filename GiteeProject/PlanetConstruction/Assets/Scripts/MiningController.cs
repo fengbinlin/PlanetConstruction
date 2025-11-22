@@ -5,209 +5,143 @@ using System.Linq;
 
 public class MiningController : MonoBehaviour
 {
-    // [Header("挖掘设置")]
-    // public float miningRange = 5f;
-    // public float minDistance = 2f;
-    // public GameObject miningMachinePrefab; // 确保在Inspector中赋值
+    [Header("挖掘设置")]
+    public float miningRange = 5f;
+    public float minDistance = 2f;
+    public GameObject miningMachinePrefab; // 确保在Inspector中赋值
+    public LayerMask oreLayerMask = -1; // 用于射线检测的图层
+    
+    private Camera mainCamera;
+    
+    void Start()
+    {
+        mainCamera = Camera.main;
+    }
     
     void Update()
     {
-        // if (Input.GetMouseButtonDown(0))
-        // {
-        //     TryMine();
-        // }
-        
-        // if (Input.GetMouseButtonDown(1))
-        // {
-        //     TryPlaceMiningMachine();
-        // }
-        
-        // if (Input.GetKeyDown(KeyCode.R))
-        // {
-        //     TryRemoveMiningMachine();
-        // }
+        if (Input.GetMouseButtonDown(0))
+        {
+            TryMineByClick();
+        }
     }
     
-    void TryMine()
+    void TryMineByClick()
     {
-        // Ore[] allOres = FindObjectsOfType<Ore>();
+        // 获取鼠标位置的世界坐标（2D）
+        Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0; // 确保z坐标为0，因为这是2D游戏
         
-        // if (allOres.Length == 0)
-        // {
-        //     Debug.Log("范围内没有发现矿石");
-        //     return;
-        // }
+        // 使用2D射线检测
+        RaycastHit2D[] hits = Physics2D.RaycastAll(mousePosition, Vector2.zero, 0f, oreLayerMask);
         
-        // // 筛选符合条件的矿石
-        // var validOres = allOres.Where(ore => 
-        // {
-        //     float distance = Vector3.Distance(transform.position, ore.transform.position);
-        //     return distance <= miningRange && distance > minDistance;
-        // }).ToArray();
+        // 如果没有检测到任何碰撞体，尝试从鼠标位置发射一条短距离射线
+        if (hits.Length == 0)
+        {
+            hits = Physics2D.RaycastAll(mousePosition, Vector2.zero, 0.1f, oreLayerMask);
+        }
         
-        // if (validOres.Length == 0)
-        // {
-        //     Debug.Log("没有找到符合条件的矿石");
-        //     return;
-        // }
+        // 按距离排序，从近到远
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         
-        // Ore nearestOre = validOres.OrderBy(ore => 
-        //     Vector3.Distance(transform.position, ore.transform.position))
-        //     .FirstOrDefault();
-        
-        // if (nearestOre != null)
-        // {
-        //     nearestOre.Mine();
-        //     Debug.Log($"开始挖掘矿石: {nearestOre.name}");
-            
-        //     // 添加金币奖励
-        //     if (GameValManager.gameValManager != null)
-        //     {
-        //         GameValManager.gameValManager.GetMoney(5); // 手动挖掘获得5金币
-        //         Debug.Log("手动挖掘获得5金币");
-        //     }
-        // }
-    }
-    
-    void TryPlaceMiningMachine()
-    {
-        // if (miningMachinePrefab == null)
-        // {
-        //     Debug.LogError("矿机预制体未赋值！请在Inspector中为miningMachinePrefab赋值");
-        //     return;
-        // }
-        
-        // // 查找所有矿机插槽
-        // MiningSlot[] allSlots = FindObjectsOfType<MiningSlot>();
-        
-        // if (allSlots.Length == 0)
-        // {
-        //     Debug.Log("场景中没有发现矿机插槽");
-        //     return;
-        // }
-        
-        // Debug.Log($"找到 {allSlots.Length} 个矿机插槽");
-        
-        // // 筛选在范围内的插槽，并只选择空的插槽
-        // var emptySlotsInRange = allSlots
-        //     .Where(slot => 
-        //     {
-        //         float distance = Vector3.Distance(transform.position, slot.transform.position);
-        //         bool inRange = distance <= miningRange;
-        //         bool isEmpty = slot.miningMachine == null;
+        foreach (RaycastHit2D hit in hits)
+        {
+            if (hit.collider != null)
+            {
+                print("检测到碰撞体: " + hit.collider.gameObject.name);
+                Ore ore = hit.collider.GetComponent<Ore>();
                 
-        //         if (!inRange) Debug.Log($"插槽 {slot.name} 距离 {distance:F2} 超出范围");
-        //         if (!isEmpty) Debug.Log($"插槽 {slot.name} 已有矿机");
-                
-        //         return inRange && isEmpty;
-        //     })
-        //     .ToArray();
+                if (ore != null)
+                {
+                    print("找到矿石组件");
+                    // 检查距离条件
+                    float distance = Vector2.Distance(transform.position, ore.transform.position);
+                    
+                    if (distance <= miningRange && distance > minDistance)
+                    {
+                        ore.Mine();
+                        Debug.Log($"开始挖掘矿石: {ore.name}");
+                        
+                        // 添加金币奖励
+                        if (GameValManager.gameValManager != null)
+                        {
+                            // GameValManager.gameValManager.GetMoney(5); // 手动挖掘获得5金币
+                            Debug.Log("手动挖掘获得5金币");
+                        }
+                        
+                        // 找到一个有效的矿石后就返回，不继续检测
+                        return;
+                    }
+                    else
+                    {
+                        if (distance <= minDistance)
+                        {
+                            Debug.Log("距离太近，无法挖掘");
+                        }
+                        else if (distance > miningRange)
+                        {
+                            Debug.Log("距离太远，无法挖掘");
+                        }
+                    }
+                }
+            }
+        }
         
-        // Debug.Log($"范围内找到 {emptySlotsInRange.Length} 个空插槽");
-        
-        // if (emptySlotsInRange.Length == 0)
-        // {
-        //     Debug.Log("没有在范围内找到空的矿机插槽");
-        //     return;
-        // }
-        
-        // // 找到最近的空插槽
-        // MiningSlot nearestEmptySlot = emptySlotsInRange
-        //     .OrderBy(slot => Vector3.Distance(transform.position, slot.transform.position))
-        //     .FirstOrDefault();
-        
-        // if (nearestEmptySlot != null&&GameValManager.gameValManager.valMoney>50)
-        // {
-        //     Debug.Log($"找到最近空插槽: {nearestEmptySlot.name}, 距离: {Vector3.Distance(transform.position, nearestEmptySlot.transform.position):F2}");
-        //     GameValManager.gameValManager.GetMoney(-50);
-        //     // 在插槽位置生成矿机
-        //     GameObject miningMachineObj = Instantiate(miningMachinePrefab, 
-        //         nearestEmptySlot.transform.position, 
-        //         nearestEmptySlot.transform.rotation,MainRoot.instance.MainScene.gameObject.transform);
-            
-        //     // 确保矿机有MiningMachine组件
-        //     MiningMachine miningMachine = miningMachineObj.GetComponent<MiningMachine>();
-        //     if (miningMachine == null)
-        //     {
-        //         miningMachine = miningMachineObj.AddComponent<MiningMachine>();
-        //         Debug.Log("为矿机添加了MiningMachine组件");
-        //     }
-            
-        //     // 建立双向关联
-        //     nearestEmptySlot.miningMachine = miningMachine;
-        //     miningMachine.assignedSlot = nearestEmptySlot;
-            
-        //     // 为矿机分配最近的矿石
-        //     Ore nearestOre = FindNearestOre(nearestEmptySlot.transform.position);
-        //     if (nearestOre != null)
-        //     {
-        //         miningMachine.AssignOre(nearestOre);
-        //         Debug.Log($"矿机已分配矿石: {nearestOre.name}");
-        //     }
-        //     else
-        //     {
-        //         Debug.LogWarning("附近没有找到矿石");
-        //     }
-            
-        //     Debug.Log($"成功在插槽 {nearestEmptySlot.name} 放置矿机");
-        // }
+        // 如果没有找到有效的矿石，可以添加其他逻辑
+        Debug.Log("没有点击到有效的矿石");
     }
     
-    void TryRemoveMiningMachine()
+    // 在场景视图中绘制挖掘范围，便于调试
+    void OnDrawGizmosSelected()
     {
-        // // 查找所有矿机
-        // MiningMachine[] allMachines = FindObjectsOfType<MiningMachine>();
+        // 绘制最小距离圆
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, minDistance);
         
-        // if (allMachines.Length == 0)
-        // {
-        //     Debug.Log("场景中没有发现矿机");
-        //     return;
-        // }
-        
-        // // 筛选在范围内的矿机
-        // var validMachines = allMachines.Where(machine => 
-        //     Vector3.Distance(transform.position, machine.transform.position) <= miningRange)
-        //     .ToArray();
-        
-        // if (validMachines.Length == 0)
-        // {
-        //     Debug.Log("没有在范围内找到矿机");
-        //     return;
-        // }
-        
-        // // 找到最近的矿机
-        // MiningMachine nearestMachine = validMachines
-        //     .OrderBy(machine => Vector3.Distance(transform.position, machine.transform.position))
-        //     .FirstOrDefault();
-        
-        // if (nearestMachine != null)
-        // {
-        //     if (nearestMachine.assignedSlot != null)
-        //     {
-        //         nearestMachine.assignedSlot.miningMachine = null;
-        //         Debug.Log("已从插槽移除矿机引用");
-        //     }
-            
-        //     Destroy(nearestMachine.gameObject);
-        //     Debug.Log("成功拆卸矿机");
-        // }
+        // 绘制最大挖掘范围圆
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, miningRange);
     }
     
-    // Ore FindNearestOre(Vector3 position)
-    // {
-    //     Ore[] allOres = FindObjectsOfType<Ore>();
-    //     if (allOres.Length == 0) return null;
+    // 可选：保留原来的自动寻找最近矿石的方法，但改为手动调用
+    void TryMineNearest()
+    {
+        Ore[] allOres = FindObjectsOfType<Ore>();
         
-    //     return allOres.OrderBy(ore => Vector3.Distance(position, ore.transform.position))
-    //                   .FirstOrDefault();
-    // }
-    
-    // void OnDrawGizmosSelected()
-    // {
-    //     Gizmos.color = Color.yellow;
-    //     Gizmos.DrawWireSphere(transform.position, miningRange);
+        if (allOres.Length == 0)
+        {
+            Debug.Log("范围内没有发现矿石");
+            return;
+        }
         
-    //     Gizmos.color = Color.red;
-    //     Gizmos.DrawWireSphere(transform.position, minDistance);
-    // }
+        // 筛选符合条件的矿石
+        var validOres = allOres.Where(ore => 
+        {
+            float distance = Vector2.Distance(transform.position, ore.transform.position);
+            return distance <= miningRange && distance > minDistance;
+        }).ToArray();
+        
+        if (validOres.Length == 0)
+        {
+            Debug.Log("没有找到符合条件的矿石");
+            return;
+        }
+        
+        Ore nearestOre = validOres.OrderBy(ore => 
+            Vector2.Distance(transform.position, ore.transform.position))
+            .FirstOrDefault();
+        
+        if (nearestOre != null)
+        {
+            nearestOre.Mine();
+            Debug.Log($"开始挖掘矿石: {nearestOre.name}");
+            
+            // 添加金币奖励
+            if (GameValManager.gameValManager != null)
+            {
+                // GameValManager.gameValManager.GetMoney(5); // 手动挖掘获得5金币
+                Debug.Log("手动挖掘获得5金币");
+            }
+        }
+    }
 }
