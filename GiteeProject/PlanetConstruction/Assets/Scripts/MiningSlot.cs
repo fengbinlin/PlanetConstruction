@@ -16,112 +16,90 @@ public class MiningSlot : MonoBehaviour
     
     // 可点击区域的碰撞器（小的）
     public Collider2D clickableCollider;
-    // 触发器区域的碰撞器（大的）
-    public Collider2D triggerCollider;
     
     public GameObject MiningCanvas;
     // 玩家引用
     private GameObject player;
     public LayerMask clickLayerMask;
+
     void Start()
     {
-        // // 获取碰撞器组件
-        // Collider2D[] colliders = GetComponents<Collider2D>();
-        // foreach (Collider2D collider in colliders)
-        // {
-        //     if (collider.isTrigger)
-        //     {
-        //         triggerCollider = collider; // 触发器碰撞器（大的）
-        //     }
-        //     else
-        //     {
-        //         clickableCollider = collider; // 可点击碰撞器（小的）
-        //     }
-        // }
-        
-        // // 如果没有找到两个碰撞器，尝试在子对象中查找
-        // if (triggerCollider == null || clickableCollider == null)
-        // {
-        //     Collider2D[] childColliders = GetComponentsInChildren<Collider2D>();
-        //     foreach (Collider2D collider in childColliders)
-        //     {
-        //         if (collider.isTrigger && triggerCollider == null)
-        //         {
-        //             triggerCollider = collider;
-        //         }
-        //         else if (!collider.isTrigger && clickableCollider == null)
-        //         {
-        //             clickableCollider = collider;
-        //         }
-        //     }
-        // }
-        
         // 初始化状态
         if (MingingSlot != null)
             MingingSlot.SetActive(false);
         
         if (MiningMachine != null)
             MiningMachine.SetActive(false);
+        
         MiningCanvas.SetActive(false);
         isFull = false;
+        
+        // 订阅Ore的事件
+        if (faOre != null)
+        {
+            faOre.OnPlayerProximityChanged += HandlePlayerProximityChanged;
+        }
+        else
+        {
+            Debug.LogError("MiningSlot没有关联的Ore！");
+        }
+    }
+
+    void OnDestroy()
+    {
+        // 取消订阅事件
+        if (faOre != null)
+        {
+            faOre.OnPlayerProximityChanged -= HandlePlayerProximityChanged;
+        }
     }
 
     void Update()
     {
         // 检测鼠标点击
-        // if (isPlayerInRange && !isFull && Input.GetMouseButtonDown(0))
-        // {
-        //     CheckClickOnSlot();
-        // }
+        if (isPlayerInRange && Input.GetMouseButtonDown(0))
+        {
+            CheckClickOnSlot();
+        }
     }
 
-    // 当玩家进入触发区域
-    void OnTriggerEnter2D(Collider2D other)
+    // 处理玩家接近状态变化的事件
+    private void HandlePlayerProximityChanged(bool playerInRange)
     {
-        if (other.CompareTag("Player"))
+        isPlayerInRange = playerInRange;
+        
+        if (playerInRange)
         {
-            isPlayerInRange = true;
-            player = other.gameObject;
-            
-            // 显示槽位（如果没有矿机）
+            // 玩家进入范围，显示槽位（如果没有矿机）
             if (!isFull && MingingSlot != null)
             {
                 MingingSlot.SetActive(true);
-                MiningCanvas.SetActive(true);
             }
         }
-    }
-
-    // 当玩家离开触发区域
-    void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.CompareTag("Player"))
+        else
         {
-            isPlayerInRange = false;
-            player = null;
-            
-            // 隐藏槽位
+            // 玩家离开范围，隐藏槽位和UI
             if (MingingSlot != null)
             {
                 MingingSlot.SetActive(false);
-                MiningCanvas.SetActive(false);
             }
+            MiningCanvas.SetActive(false);
         }
     }
 
-    // 检查是否点击了槽位
-    // private void CheckClickOnSlot()
-    // {
-    //     // 创建射线从鼠标位置
-    //     Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-    //     RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, clickLayerMask);
+    //检查是否点击了槽位
+    private void CheckClickOnSlot()
+    {
+        // 创建射线从鼠标位置
+        Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, clickLayerMask);
 
-    //     // 检查是否点击了可点击区域（小的碰撞器）
-    //     if (hit.collider != null && hit.collider == clickableCollider)
-    //     {
-    //         PlaceMiningMachine();
-    //     }
-    // }
+        // 检查是否点击了可点击区域（小的碰撞器）
+        if (hit.collider != null && hit.collider == clickableCollider)
+        {
+            MiningCanvas.SetActive(true);
+        }
+    }
 
     // 放置矿机
     public void PlaceMiningMachine()
@@ -130,18 +108,17 @@ public class MiningSlot : MonoBehaviour
         
         isFull = true;
         
-        // 隐藏槽位，显示矿机
-        if (MingingSlot != null)
-            MingingSlot.SetActive(false);
-        
         if (MiningMachine != null)
             MiningMachine.SetActive(true);
         
         Debug.Log("矿机已放置到槽位！");
         MiningCanvas.SetActive(false);
-        // 可以在这里添加放置矿机后的其他逻辑
-        // 比如开始采矿、播放音效等
+        
+        // 隐藏槽位图标
+        if (MingingSlot != null)
+            MingingSlot.SetActive(false);
 
+        // 通知Ore添加矿机
         faOre.AddMiningMachine(this);
     }
 
@@ -160,6 +137,9 @@ public class MiningSlot : MonoBehaviour
         {
             MingingSlot.SetActive(true);
         }
+        
+        // 通知Ore移除矿机
+        faOre.RemoveMiningMachine(this);
         
         Debug.Log("矿机已从槽位移除！");
     }

@@ -68,6 +68,7 @@ public class PlayerInteractionManager : MonoBehaviour
         {
             print("进入飞船");
             isInSpaceshipArea = true;
+            spaceship.GetComponent<SpriteBounceEffect>().PlayBounce();
             ShowSpaceshipUI();
         }
     }
