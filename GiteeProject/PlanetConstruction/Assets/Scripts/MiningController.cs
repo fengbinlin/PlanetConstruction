@@ -44,7 +44,7 @@ public class MiningController : MonoBehaviour
         if (isMining && currentMiningOre != null)
         {
             float distance = Vector2.Distance(transform.position, currentMiningOre.transform.position);
-            if (distance > miningRange || distance <= minDistance)
+            if (miningOre.OreCanvas.activeInHierarchy==false)
             {
                 StopMining();
                 Debug.Log("距离变化，停止挖矿");
@@ -57,14 +57,14 @@ public class MiningController : MonoBehaviour
             drillVibration.StartVibration();
         }
     }
-    
+    public Ore miningOre;
     void TryStartMiningByClick()
     {
         // 获取鼠标位置的世界坐标（2D）
         Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         mousePosition.z = 0;
         
-        // 使用2D射线检测
+        // 使用2D射线检测，只检测非Trigger的碰撞器
         RaycastHit2D[] hits = Physics2D.RaycastAll(mousePosition, Vector2.zero, 0f, oreLayerMask);
         
         // 如果没有检测到任何碰撞体，尝试从鼠标位置发射一条短距离射线
@@ -78,39 +78,41 @@ public class MiningController : MonoBehaviour
         
         foreach (RaycastHit2D hit in hits)
         {
+            // 跳过Trigger碰撞器，只检测非Trigger碰撞器
+            if (hit.collider.isTrigger)
+            {
+                continue;
+            }
+            
             if (hit.collider != null)
             {
-                print("检测到碰撞体: " + hit.collider.gameObject.name);
+                print("检测到非Trigger碰撞体: " + hit.collider.gameObject.name);
                 Ore ore = hit.collider.GetComponent<Ore>();
                 
                 if (ore != null)
                 {
+                    
                     print("找到矿石组件");
                     // 检查距离条件
                     float distance = Vector2.Distance(transform.position, ore.transform.position);
                     
-                    if (distance <= miningRange && distance > minDistance)
+                    if (ore.OreCanvas.activeInHierarchy==true)
                     {
+                        miningOre=ore;
+                        ore.spriteBounceEffect.PlayBounce();
                         // 开始挖矿
                         StartMining(ore);
                         return;
                     }
                     else
                     {
-                        if (distance <= minDistance)
-                        {
-                            Debug.Log("距离太近，无法挖掘");
-                        }
-                        else if (distance > miningRange)
-                        {
-                            Debug.Log("距离太远，无法挖掘");
-                        }
+                        Debug.Log("距离太远，无法挖掘");
                     }
                 }
             }
         }
         
-        Debug.Log("没有点击到有效的矿石");
+        Debug.Log("没有点击到有效的矿石（非Trigger碰撞器）");
     }
     
     // 开始挖矿

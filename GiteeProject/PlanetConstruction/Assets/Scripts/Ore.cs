@@ -8,7 +8,9 @@ using UnityEngine.UI;
 public class Ore : MonoBehaviour
 {
     [Header("矿石设置")]
+    public GameObject OreCanvas;
     public List<MiningSlot> MiningMachines;
+    public List<MiningSlot> MiningSlots;
     public int mineValue = 1; // 基础每次挖掘获得的金币数
     public int mineMachineMineOutMultiplier = 1;
     public float baseMiningInterval = 2f; // 基础挖矿间隔时间（秒）
@@ -31,6 +33,7 @@ public class Ore : MonoBehaviour
     private float currentMiningInterval; // 当前实际的挖矿间隔（受加成影响）
     private float currentMiningProgress = 0f; // 当前挖矿进度（0-1）
 
+    public SpriteBounceEffect spriteBounceEffect;
     void Start()
     {
         oreTriggerCollider = GetComponent<Collider2D>();
@@ -62,6 +65,7 @@ public class Ore : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             Debug.Log("玩家进入矿石范围");
+            OreCanvas.gameObject.SetActive(true);
             OnPlayerProximityChanged?.Invoke(true);
         }
     }
@@ -72,6 +76,7 @@ public class Ore : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             Debug.Log("玩家离开矿石范围");
+            OreCanvas.gameObject.SetActive(false);
             OnPlayerProximityChanged?.Invoke(false);
         }
     }

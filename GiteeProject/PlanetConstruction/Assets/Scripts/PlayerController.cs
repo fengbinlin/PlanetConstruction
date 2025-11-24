@@ -6,7 +6,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float acceleration = 25f;
     [SerializeField] private float deceleration = 30f;
-    [SerializeField] private float rotationSpeed = 720f;
+    // 移除了 rotationSpeed 字段
 
     [Header("响应性设置")]
     [SerializeField] private float inputDeadZone = 0.1f;
@@ -36,7 +36,7 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         HandleMovement();
-        HandleRotation();
+        // 移除了 HandleRotation() 的调用
     }
 
     private void HandleInput()
@@ -90,28 +90,36 @@ public class PlayerController : MonoBehaviour
 
     private bool IsOnFloor(Vector2 position)
     {
-
         // 在这个位置检测是否有 Floor trigger
         Collider2D hit = Physics2D.OverlapPoint(position, floorLayerMask);
-        // print(hit != null);
         return hit != null;
     }
 
-    private void HandleRotation()
-    {
-        if (isMoving)
-        {
-            float targetAngle = Mathf.Atan2(moveInput.y, moveInput.x) * Mathf.Rad2Deg;
-            Quaternion targetRotation = Quaternion.Euler(0, 0, targetAngle);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
-        }
-    }
+    // 移除了整个 HandleRotation 方法
+    // private void HandleRotation()
+    // {
+    //     if (isMoving)
+    //     {
+    //         float targetAngle = Mathf.Atan2(moveInput.y, moveInput.x) * Mathf.Rad2Deg;
+    //         Quaternion targetRotation = Quaternion.Euler(0, 0, targetAngle);
+    //         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
+    //     }
+    // }
 
     private void HandleAnimation()
     {
         if (animator != null)
         {
-            // 可加入动画逻辑
+            // 设置动画参数，但不影响物体旋转
+            animator.SetFloat("Speed", currentVelocity.magnitude);
+            
+            // 如果需要根据移动方向播放不同动画，但保持玩家不旋转
+            if (isMoving)
+            {
+                // 可以设置方向参数用于动画混合树
+                animator.SetFloat("Horizontal", moveInput.x);
+                animator.SetFloat("Vertical", moveInput.y);
+            }
         }
     }
 

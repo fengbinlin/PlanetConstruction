@@ -13,14 +13,17 @@ namespace DamageNumbersPro.Demo
         Text currentPrefabText;
         Text currentIndexText;
 
-        DamageNumber[] prefabs;
+        public DamageNumber[] prefabs;
         int currentIndex;
         DNP_PrefabSettings currentSettings;
 
         CanvasGroup fade;
         bool fadeOut;
         string loadScene;
-
+        void OnEnable()
+        {
+            instance=this;
+        }
         void Awake()
         {
             // Reference Single Instance
@@ -31,7 +34,9 @@ namespace DamageNumbersPro.Demo
             prefabs = new DamageNumber[parent.childCount];
             for(int n = 0; n < parent.childCount; n++)
             {
+                //
                 prefabs[n] = parent.GetChild(n).GetComponent<DamageNumber>();
+                print(prefabs[n].name);
             }
             parent.gameObject.SetActive(false);
 
@@ -160,6 +165,10 @@ namespace DamageNumbersPro.Demo
         {
             if(currentSettings == null)
             {
+                currentIndex=0;
+                print(prefabs.Length);
+                print(prefabs[currentIndex].gameObject.name);
+                
                 currentSettings = prefabs[currentIndex].gameObject.AddComponent<DNP_PrefabSettings>();
             }
 

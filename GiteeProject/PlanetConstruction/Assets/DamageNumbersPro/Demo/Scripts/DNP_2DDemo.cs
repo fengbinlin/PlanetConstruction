@@ -16,6 +16,10 @@ namespace DamageNumbersPro.Demo
         {
             instance = this;
         }
+        void OnEnable()
+        {
+            instance=this;
+        }
         void Start()
         {
             nextShotTime = 0;
@@ -28,18 +32,20 @@ namespace DamageNumbersPro.Demo
             // 获取当前选中的伤害数字预制体
             DamageNumber prefab = DNP_DemoManager.instance.GetCurrent();
             DNP_PrefabSettings settings = DNP_DemoManager.instance.GetSettings();
-
+            print("AAA");
             // 如果未指定伤害值，生成随机值
             if (damageValue == 0f)
             {
                 damageValue = GenerateRandomDamage(settings, prefab);
+                print("BBBB");
             }
 
             // 创建伤害数字实例
             DamageNumber newDamageNumber = prefab.Spawn(worldPosition, damageValue);
-
+            print("CCC");
             // 应用设置
             settings.Apply(newDamageNumber);
+            print("DDD");
         }
         public void CreateDamageNumberWithRandomValue(Vector3 worldPosition)
         {

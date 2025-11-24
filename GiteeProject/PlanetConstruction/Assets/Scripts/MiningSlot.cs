@@ -13,10 +13,10 @@ public class MiningSlot : MonoBehaviour
     public GameObject MingingSlot;
     //矿机图标
     public GameObject MiningMachine;
-    
+
     // 可点击区域的碰撞器（小的）
     public Collider2D clickableCollider;
-    
+
     public GameObject MiningCanvas;
     // 玩家引用
     private GameObject player;
@@ -24,16 +24,17 @@ public class MiningSlot : MonoBehaviour
 
     void Start()
     {
+        faOre.MiningSlots.Add(this);
         // 初始化状态
         if (MingingSlot != null)
             MingingSlot.SetActive(false);
-        
+
         if (MiningMachine != null)
             MiningMachine.SetActive(false);
-        
+
         MiningCanvas.SetActive(false);
         isFull = false;
-        
+
         // 订阅Ore的事件
         if (faOre != null)
         {
@@ -67,7 +68,7 @@ public class MiningSlot : MonoBehaviour
     private void HandlePlayerProximityChanged(bool playerInRange)
     {
         isPlayerInRange = playerInRange;
-        
+
         if (playerInRange)
         {
             // 玩家进入范围，显示槽位（如果没有矿机）
@@ -97,23 +98,49 @@ public class MiningSlot : MonoBehaviour
         // 检查是否点击了可点击区域（小的碰撞器）
         if (hit.collider != null && hit.collider == clickableCollider)
         {
-            MiningCanvas.SetActive(true);
+
+
+            if (MiningCanvas.activeInHierarchy)
+            {
+                for (int i = 0; i < faOre.MiningSlots.Count; i++)
+                {
+                    faOre.MiningSlots[i].MiningCanvas.SetActive(false);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < faOre.MiningSlots.Count; i++)
+                {
+                    faOre.MiningSlots[i].MiningCanvas.SetActive(false);
+                }
+                MiningCanvas.SetActive(true);
+            }
+
+
         }
     }
 
     // 放置矿机
     public void PlaceMiningMachine()
     {
+
         if (isFull) return;
-        
+        if (GameValManager.gameValManager.valMoney >= 50)
+        {
+            GameValManager.gameValManager.valMoney -= 50;
+        }
+        else
+        {
+            return;
+        }
         isFull = true;
-        
+
         if (MiningMachine != null)
             MiningMachine.SetActive(true);
-        
+
         Debug.Log("矿机已放置到槽位！");
         MiningCanvas.SetActive(false);
-        
+
         // 隐藏槽位图标
         if (MingingSlot != null)
             MingingSlot.SetActive(false);
@@ -126,21 +153,21 @@ public class MiningSlot : MonoBehaviour
     public void RemoveMiningMachine()
     {
         if (!isFull) return;
-        
+
         isFull = false;
-        
+
         if (MiningMachine != null)
             MiningMachine.SetActive(false);
-        
+
         // 如果玩家在附近，重新显示槽位
         if (isPlayerInRange && MingingSlot != null)
         {
             MingingSlot.SetActive(true);
         }
-        
+
         // 通知Ore移除矿机
         faOre.RemoveMiningMachine(this);
-        
+
         Debug.Log("矿机已从槽位移除！");
     }
 
