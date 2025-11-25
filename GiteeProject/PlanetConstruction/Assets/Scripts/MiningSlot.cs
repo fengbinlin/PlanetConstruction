@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MiningSlot : MonoBehaviour
 {
@@ -21,7 +22,8 @@ public class MiningSlot : MonoBehaviour
     // 玩家引用
     private GameObject player;
     public LayerMask clickLayerMask;
-
+    public Text machinePrice;
+    public Text machineSpeed;
     void Start()
     {
         faOre.MiningSlots.Add(this);
@@ -55,6 +57,17 @@ public class MiningSlot : MonoBehaviour
         }
     }
 
+
+    public void updateMiningInformation()
+    {
+        //更新价格
+        int curMachineNum=GameValManager.gameValManager.oreMineMachineNum[0].nums;
+        machinePrice.text=(50+10*curMachineNum).ToString();
+        //更新速率
+        float curMachineInternal=1.0f/faOre.GetCurrentMiningInterval();
+        machineSpeed.text=curMachineInternal+"币/秒";
+
+    }
     void Update()
     {
         // 检测鼠标点击
@@ -91,6 +104,7 @@ public class MiningSlot : MonoBehaviour
     //检查是否点击了槽位
     private void CheckClickOnSlot()
     {
+        updateMiningInformation();
         // 创建射线从鼠标位置
         Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, clickLayerMask);
@@ -125,9 +139,11 @@ public class MiningSlot : MonoBehaviour
     {
 
         if (isFull) return;
-        if (GameValManager.gameValManager.valMoney >= 50)
+        int curMachineNum=GameValManager.gameValManager.oreMineMachineNum[0].nums;
+        int curMachinePrice=50+10*curMachineNum;
+        if (GameValManager.gameValManager.valMoney >= curMachinePrice)
         {
-            GameValManager.gameValManager.valMoney -= 50;
+            GameValManager.gameValManager.GetMoney(curMachinePrice*-1);
         }
         else
         {
@@ -137,7 +153,7 @@ public class MiningSlot : MonoBehaviour
 
         if (MiningMachine != null)
             MiningMachine.SetActive(true);
-
+        GameValManager.gameValManager.oreMineMachineNum[0].nums++;
         Debug.Log("矿机已放置到槽位！");
         MiningCanvas.SetActive(false);
 

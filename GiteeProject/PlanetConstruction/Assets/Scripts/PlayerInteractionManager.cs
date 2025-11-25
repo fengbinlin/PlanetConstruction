@@ -66,6 +66,7 @@ public class PlayerInteractionManager : MonoBehaviour
         SpaceShip spaceship = other.gameObject.GetComponent<SpaceShip>();
         if (spaceship != null && !isInSpaceshipArea)
         {
+            PlayerController.instance.playerState=playerState.inUI;
             print("进入飞船");
             isInSpaceshipArea = true;
             spaceship.GetComponent<SpriteBounceEffect>().PlayBounce();
@@ -80,7 +81,7 @@ public class PlayerInteractionManager : MonoBehaviour
         SpaceShip spaceship = other.gameObject.GetComponent<SpaceShip>();
         if (spaceship != null && isInSpaceshipArea)
         {
-
+            PlayerController.instance.playerState=playerState.Normal;
             print("离开飞船");
             isInSpaceshipArea = false;
             HideSpaceshipUI();

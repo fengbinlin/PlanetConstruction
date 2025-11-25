@@ -13,7 +13,7 @@ public class Ore : MonoBehaviour
     public List<MiningSlot> MiningSlots;
     public int mineValue = 1; // 基础每次挖掘获得的金币数
     public int mineMachineMineOutMultiplier = 1;
-    public float baseMiningInterval = 2f; // 基础挖矿间隔时间（秒）
+    public float baseMiningInterval = 1f; // 基础挖矿间隔时间（秒）
     
     [Header("手动挖矿进度条")]
     public Image miningProgressBar; // 进度条Image组件

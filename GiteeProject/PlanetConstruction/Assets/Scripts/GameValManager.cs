@@ -4,8 +4,19 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 
-public class GameValManager : MonoBehaviour
+public enum oreType
 {
+    normalOre,
+}
+[System.Serializable]
+public class OreMineMachineNum
+{
+    public oreType myOreType;
+    public int nums;
+}
+
+public class GameValManager : MonoBehaviour
+{    public List<OreMineMachineNum> oreMineMachineNum;
     public static GameValManager gameValManager;
     
     [Header("基础数值")]

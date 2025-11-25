@@ -1,8 +1,16 @@
+using Playniax.Ignition.Framework;
 using UnityEngine;
 
+public enum playerState
+{
+    Normal,
+    inUI
+}
 public class PlayerController : MonoBehaviour
 {
-    [Header("移动设置")]
+    public static PlayerController instance;
+    public playerState playerState;
+    [Header("移动设置")] 
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float acceleration = 25f;
     [SerializeField] private float deceleration = 30f;
@@ -37,6 +45,12 @@ public class PlayerController : MonoBehaviour
     {
         HandleMovement();
         // 移除了 HandleRotation() 的调用
+    }
+
+    void Start()
+    {
+        playerState=playerState.Normal;
+        instance=this;
     }
 
     private void HandleInput()

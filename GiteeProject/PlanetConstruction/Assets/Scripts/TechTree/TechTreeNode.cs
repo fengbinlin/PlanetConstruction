@@ -3,21 +3,19 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 
-// 科技节点控制器
 public class TechTreeNode : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("UI组件")]
     public Image nodeBackground;
-    public TextMeshProUGUI techNameText;
+    public Text techNameText;
     public Image iconImage;
     public GameObject lockedOverlay;
     public GameObject researchedOverlay;
     public GameObject availableIndicator;
     
-    [Header("连接线")]
-    public LineRenderer connectionLine;
-    public Transform lineStartPoint;
-    public Transform lineEndPoint;
+    [Header("连接点")]
+    public Transform lineStartPoint; // 连接线起点（节点左侧）
+    public Transform lineEndPoint;   // 连接线终点（节点右侧）
     
     [Header("状态颜色")]
     public Color availableColor = Color.green;
@@ -35,8 +33,8 @@ public class TechTreeNode : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         treeManager = manager;
         
         UpdateNodeAppearance();
-        
-        // 设置节点名称
+        print(techNameText.name);
+        print(tech.techName);
         techNameText.text = tech.techName;
     }
     
@@ -110,27 +108,5 @@ public class TechTreeNode : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     public int GetTechId()
     {
         return assignedTechnology != null ? assignedTechnology.id : -1;
-    }
-    
-    // 绘制连接到其他节点的线
-    public void DrawConnectionTo(TechTreeNode targetNode)
-    {
-        if (connectionLine == null || targetNode == null) return;
-        
-        connectionLine.positionCount = 2;
-        connectionLine.SetPosition(0, lineStartPoint.position);
-        connectionLine.SetPosition(1, targetNode.lineEndPoint.position);
-        
-        // 根据连接状态设置线条颜色
-        if (assignedTechnology.isResearched && targetNode.assignedTechnology.isUnlocked)
-        {
-            connectionLine.startColor = availableColor;
-            connectionLine.endColor = availableColor;
-        }
-        else
-        {
-            connectionLine.startColor = lockedColor;
-            connectionLine.endColor = lockedColor;
-        }
     }
 }
