@@ -39,71 +39,37 @@ public class TechResearchLab : MonoBehaviour
     [Header("科技列表")]
     public List<Technology> allTechnologies = new List<Technology>();
     
-    [Header("UI引用")]
-    public Transform techButtonParent; // 科技按钮的父对象
-    public GameObject techButtonPrefab; // 科技按钮预制体
-    
     // 事件：当科技研究完成时触发
-    public static event Action<Technology> OnTechnologyResearched;
+    public event Action<Technology> OnTechnologyResearched;
     
     void Start()
     {
         InitializeTechnologies();
-        CreateTechButtons();
     }
     
-    void InitializeTechnologies()
+    public void InitializeTechnologies()
     {
         allTechnologies.Clear();
         
-        // 根据你的科技树图初始化科技
-        // 序号1：矿机1 - 默认解锁
+        // 科技数据初始化
         allTechnologies.Add(new Technology(1, "矿机1", "解锁第一台自动矿机", 
             new List<int>(), 0, 0, 0, 0, true));
         allTechnologies[0].isUnlocked = true;
         
-        // 序号2：挖矿buff - 需要前置1
         allTechnologies.Add(new Technology(2, "初级挖矿强化", "提升手动采矿效率", 
             new List<int>{1}, 100, 0, 1.0f, 0));
         
-        // 序号3：矿机buff - 需要前置1
         allTechnologies.Add(new Technology(3, "初级矿机加速", "提升矿机工作效率", 
             new List<int>{1}, 150, 0, 0, 0.5f));
         
-        // 序号4：挖矿buff - 需要前置2
         allTechnologies.Add(new Technology(4, "中级挖矿强化", "进一步提升手动采矿效率", 
             new List<int>{2}, 300, 0, 2.0f, 0));
         
-        // 序号5：矿机buff - 需要前置3
         allTechnologies.Add(new Technology(5, "中级矿机加速", "进一步提升矿机工作效率", 
             new List<int>{3}, 400, 0, 0, 1.0f));
         
-        // 序号6：新矿机 - 需要前置4和5
         allTechnologies.Add(new Technology(6, "矿机2", "解锁第二台自动矿机", 
             new List<int>{4,5}, 800, 0, 0, 0, true));
-    }
-    
-    void CreateTechButtons()
-    {
-        if (techButtonParent == null || techButtonPrefab == null) return;
-        
-        // 清空现有的按钮
-        foreach (Transform child in techButtonParent)
-        {
-            Destroy(child.gameObject);
-        }
-        
-        // 创建新的科技按钮
-        foreach (Technology tech in allTechnologies)
-        {
-            GameObject buttonObj = Instantiate(techButtonPrefab, techButtonParent);
-            TechButtonController buttonController = buttonObj.GetComponent<TechButtonController>();
-            
-            if (buttonController != null)
-            {
-                buttonController.Initialize(tech, this);
-            }
-        }
     }
     
     // 检查科技是否可以研究
@@ -140,7 +106,7 @@ public class TechResearchLab : MonoBehaviour
         // 解锁后续科技
         UnlockSubsequentTechnologies(techId);
         
-        // 触发事件
+        // 正确的事件触发方式
         OnTechnologyResearched?.Invoke(tech);
         
         Debug.Log($"科技研究成功: {tech.techName}");
@@ -191,31 +157,12 @@ public class TechResearchLab : MonoBehaviour
                 {
                     tech.isUnlocked = true;
                     Debug.Log($"科技已解锁: {tech.techName}");
-                    
-                    // 更新对应的UI按钮
-                    UpdateTechButton(tech.id);
                 }
             }
         }
     }
     
-    // 更新科技按钮状态
-    public void UpdateTechButton(int techId)
-    {
-        if (techButtonParent == null) return;
-        
-        TechButtonController[] buttons = techButtonParent.GetComponentsInChildren<TechButtonController>();
-        foreach (TechButtonController button in buttons)
-        {
-            if (button.GetTechId() == techId)
-            {
-                button.RefreshUI();
-                break;
-            }
-        }
-    }
-    
-    // 根据ID获取科技 - 这里是我遗漏的方法
+    // 根据ID获取科技
     public Technology GetTechnologyById(int techId)
     {
         foreach (Technology tech in allTechnologies)
