@@ -79,6 +79,9 @@ public class PlayerInteractionManager : MonoBehaviour
 
         // 检查碰撞对象是否有SpaceShip组件
         SpaceShip spaceship = other.gameObject.GetComponent<SpaceShip>();
+        if(spaceship != null){
+            PlayerController.instance.playerState=playerState.Normal;
+        }
         if (spaceship != null && isInSpaceshipArea)
         {
             PlayerController.instance.playerState=playerState.Normal;

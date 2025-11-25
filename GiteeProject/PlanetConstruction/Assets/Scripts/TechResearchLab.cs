@@ -78,8 +78,8 @@ public class TechResearchLab : MonoBehaviour
         allTechnologies.Add(new Technology(5, "中级矿机加速", "进一步提升矿机工作效率",
             new List<int> { 3 }, 400, 0, 0, 1.0f));
 
-        allTechnologies.Add(new Technology(6, "矿机2", "解锁第二台自动矿机",
-            new List<int> { 4, 5 }, 800, 0, 0, 0, true));
+        // allTechnologies.Add(new Technology(6, "矿机2", "解锁第二台自动矿机",
+        //     new List<int> { 4, 5 }, 800, 0, 0, 0, true));
 
         Debug.Log($"科技初始化完成，共 {allTechnologies.Count} 个科技");
     }

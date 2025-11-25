@@ -1,62 +1,124 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Linq;
 
 public class UpgradeManager : MonoBehaviour
 {
     public static UpgradeManager Instance;
 
-    public GameObject upgradePanel; // UI面板（包含3个按钮）
-    public UpgradeCardUI[] cardSlots; // 卡牌按钮UI脚本
+    public GameObject upgradePanel;
+    public UpgradeCardUI[] cardSlots;
 
-    private BulletBuffNormal targetBuff;
     private List<BulletBuffNormal> targetBuffs;
+    private List<UpgradeCard> currentOptions;
+
     void Awake()
     {
-        Instance = this;
+        if (Instance == null)
+        {
+            Instance = this;
+            //tDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+        
         upgradePanel.SetActive(false);
     }
 
-    // 显示升级选项
     public void ShowUpgradeCards(List<BulletBuffNormal> buffs)
     {
         targetBuffs = buffs;
         upgradePanel.SetActive(true);
 
-        // 获取全部候选卡牌
-        List<UpgradeCard> allCards = UpgradeCardDatabase.GetAllCards();
+        // 获取所有可用卡牌（从第一个buff获取，假设所有buff的升级状态相同）
+        var availableCards = UpgradeCardDatabase.GetAvailableCards(buffs[0]);
 
-        // 打乱顺序
-        for (int i = 0; i < allCards.Count; i++)
+        if (availableCards.Count == 0)
         {
-            UpgradeCard temp = allCards[i];
-            int randomIndex = Random.Range(i, allCards.Count);
-            allCards[i] = allCards[randomIndex];
-            allCards[randomIndex] = temp;
+            Debug.LogWarning("没有可用的升级卡牌！");
+            upgradePanel.SetActive(false);
+            Time.timeScale = 1f;
+            return;
         }
 
-        // 取前3张，不重复
+        // 加权随机选择
+        var weightedCards = new List<UpgradeCard>();
+        foreach (var card in availableCards)
+        {
+            for (int i = 0; i < card.weight; i++)
+            {
+                weightedCards.Add(card);
+            }
+        }
+
+        // 随机选择3张不重复的卡牌
+        currentOptions = new List<UpgradeCard>();
+        var tempWeightedCards = new List<UpgradeCard>(weightedCards);
+        
+        for (int i = 0; i < Mathf.Min(3, tempWeightedCards.Count); i++)
+        {
+            if (tempWeightedCards.Count == 0) break;
+            
+            int randomIndex = Random.Range(0, tempWeightedCards.Count);
+            UpgradeCard selectedCard = tempWeightedCards[randomIndex];
+            currentOptions.Add(selectedCard);
+            
+            // 移除所有相同卡牌的实例
+            tempWeightedCards.RemoveAll(card => card.id == selectedCard.id);
+        }
+
+        // 设置UI
         for (int i = 0; i < cardSlots.Length; i++)
         {
-            UpgradeCard card = allCards[i];
-            cardSlots[i].Setup(card, OnCardSelected);
+            if (i < currentOptions.Count)
+            {
+                cardSlots[i].Setup(currentOptions[i], OnCardSelected);
+                cardSlots[i].gameObject.SetActive(true);
+            }
+            else
+            {
+                cardSlots[i].gameObject.SetActive(false);
+            }
         }
 
-        // 暂停游戏
         Time.timeScale = 0f;
     }
 
-    // 选择一张卡牌
     void OnCardSelected(UpgradeCard card)
     {
-        // 对列表中的所有Buff应用升级
         foreach (var buff in targetBuffs)
         {
-            card.Apply(buff);
+            // 检查该buff是否可以应用此升级
+            var availableCards = UpgradeCardDatabase.GetAvailableCards(buff);
+            if (availableCards.Any(c => c.id == card.id))
+            {
+                card.Apply(buff);
+                Debug.Log($"应用升级: {card.title} 到 {buff.gameObject.name}");
+            }
         }
-        upgradePanel.SetActive(false);
 
-        // 恢复游戏
+        upgradePanel.SetActive(false);
         Time.timeScale = 1f;
+        
+        // 清除引用
+        targetBuffs = null;
+        currentOptions = null;
+    }
+
+    // 调试方法：显示所有可用升级
+    public void DebugShowAvailableUpgrades()
+    {
+        if (targetBuffs != null && targetBuffs.Count > 0)
+        {
+            var available = UpgradeCardDatabase.GetAvailableCards(targetBuffs[0]);
+            Debug.Log($"可用升级数量: {available.Count}");
+            foreach (var card in available)
+            {
+                Debug.Log($"- {card.title} (ID: {card.id})");
+            }
+        }
     }
 }

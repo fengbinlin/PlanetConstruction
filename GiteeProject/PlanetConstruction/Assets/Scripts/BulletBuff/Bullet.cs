@@ -8,7 +8,7 @@ public class Bullet : MonoBehaviour, IPoolable
     public float speed = 10f;
     public float trackingStrength = 2f;
     public float trackingRange = 5f;
-    private float damage;
+    public float damage;
     private int penetration;
     private int bounceTimes;
     private int subBulletCount;
@@ -117,7 +117,6 @@ public class Bullet : MonoBehaviour, IPoolable
         }
     }
 
-    // 改动：增加 lockTarget 参数，控制是否自动找初始目标
     public void Init(Vector2 dir, float dmg, int pen, int bounce, int subCount, float subDmg, bool lockTarget = true)
     {
         if (dir == Vector2.zero)
