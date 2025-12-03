@@ -25,7 +25,7 @@ public class Bullet : MonoBehaviour, IPoolable
     private bool isProcessingHit = false;
     private Coroutine autoRecycleCoroutine;
     private bool isSubBullet = false;
-
+    public  GameObject HitEffect;
     public void OnSpawnFromPool()
     {
     }
@@ -115,6 +115,7 @@ public class Bullet : MonoBehaviour, IPoolable
         {
             Destroy(gameObject);
         }
+        GameObject.Instantiate(HitEffect,transform.position,transform.rotation);
     }
 
     public void Init(Vector2 dir, float dmg, int pen, int bounce, int subCount, float subDmg, bool lockTarget = true)
