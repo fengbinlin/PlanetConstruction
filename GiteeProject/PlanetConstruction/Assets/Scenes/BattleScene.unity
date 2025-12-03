@@ -154,7 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bulletPrefab: {fileID: 2332704825581580924, guid: b462322d76378d24598f31d2479f4507, type: 3}
   subBulletPrefab: {fileID: 2332704825581580924, guid: 75dc2462b2f63454991d3dd791320992, type: 3}
-  muzzleFlashEffect: {fileID: 5050852056563863551, guid: 99e5370b762507a459642612295829a9, type: 3}
+  muzzleFlashEffect: {fileID: 198580574960934396, guid: 39fb558d46fd8c94f84e21e5051ef1d9, type: 3}
   damage: 20
   subBulletDamage: 5
   critChance: 0
@@ -4509,7 +4509,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bulletPrefab: {fileID: 2332704825581580924, guid: b462322d76378d24598f31d2479f4507, type: 3}
   subBulletPrefab: {fileID: 2332704825581580924, guid: 75dc2462b2f63454991d3dd791320992, type: 3}
-  muzzleFlashEffect: {fileID: 5050852056563863551, guid: 99e5370b762507a459642612295829a9, type: 3}
+  muzzleFlashEffect: {fileID: 198580574960934396, guid: 39fb558d46fd8c94f84e21e5051ef1d9, type: 3}
   damage: 20
   subBulletDamage: 5
   critChance: 0
@@ -5502,7 +5502,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bulletPrefab: {fileID: 2332704825581580924, guid: b462322d76378d24598f31d2479f4507, type: 3}
   subBulletPrefab: {fileID: 2332704825581580924, guid: 75dc2462b2f63454991d3dd791320992, type: 3}
-  muzzleFlashEffect: {fileID: 5050852056563863551, guid: 99e5370b762507a459642612295829a9, type: 3}
+  muzzleFlashEffect: {fileID: 198580574960934396, guid: 39fb558d46fd8c94f84e21e5051ef1d9, type: 3}
   damage: 20
   subBulletDamage: 5
   critChance: 0
@@ -7621,6 +7621,7 @@ GameObject:
   - component: {fileID: 1780583157}
   - component: {fileID: 1780583160}
   - component: {fileID: 1780583159}
+  - component: {fileID: 1780583161}
   m_Layer: 0
   m_Name: BattleManager
   m_TagString: Untagged
@@ -7700,6 +7701,24 @@ MonoBehaviour:
   playerHP: 100
   maxPlayerHP: 100
   playerHpSlider: {fileID: 585530637}
+--- !u!114 &1780583161
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1780583156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f8759b7ffd07044aba5a6b17bce65e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  muzzleFlashEffectList:
+  - {fileID: 1434253245967370, guid: 39fb558d46fd8c94f84e21e5051ef1d9, type: 3}
+  bulletEffectList:
+  - {fileID: 1213529451062198, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
+  hitEffectList:
+  - {fileID: 1974592250055434, guid: 1bf34b723819f87429ce2522d9a63819, type: 3}
 --- !u!1 &1783127016
 GameObject:
   m_ObjectHideFlags: 0

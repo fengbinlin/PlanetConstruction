@@ -5381,6 +5381,14 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 108212708603584814, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 135521883611116180, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 198277538348117068, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
       propertyPath: lengthInSec
       value: 2
@@ -5399,15 +5407,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 198701938044226476, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
       propertyPath: EmissionModule.rateOverTime.scalar
-      value: 5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 198701938044226476, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
       propertyPath: EmissionModule.rateOverDistance.scalar
-      value: 10
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 198701938044226476, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
       propertyPath: EmissionModule.rateOverDistance.minScalar
-      value: 5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 198909700012747184, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
       propertyPath: moveWithTransform
@@ -5417,7 +5425,11 @@ PrefabInstance:
       propertyPath: m_SortingOrder
       value: 22
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 54723350441956278, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
+    - {fileID: 135521883611116180, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
+    - {fileID: 8506296437104493721, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
+    - {fileID: 108212708603584814, guid: 38644a88296e4b84aa254906f5f404eb, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

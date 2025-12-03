@@ -155,7 +155,7 @@ public class BulletBuffNormal : BulletBuff
     {
         PlayMuzzleFlash(transform.position + (Vector3)direction * 0.5f, direction);
 
-        GameObject bulletObj = ObjectPoolManager.Instance?.SpawnBullet(transform.position, Quaternion.identity) ?? 
+        GameObject bulletObj = ObjectPoolManager.Instance?.SpawnBullet(transform.position+new Vector3(0.5f,0,0), Quaternion.identity) ?? 
                               Instantiate(bulletPrefab, transform.position, Quaternion.identity);
 
         Bullet bullet = bulletObj.GetComponent<Bullet>();

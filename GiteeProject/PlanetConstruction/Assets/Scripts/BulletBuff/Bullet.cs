@@ -3,8 +3,16 @@ using System.Linq;
 using System.Collections;
 using UnityEngine.SceneManagement;
 
+
+public enum bulletType
+{
+    Normal,
+    Tracking
+    
+}
 public class Bullet : MonoBehaviour, IPoolable
 {
+    public bulletType bulletType = bulletType.Normal;   
     public float speed = 10f;
     public float trackingStrength = 2f;
     public float trackingRange = 5f;
@@ -120,6 +128,10 @@ public class Bullet : MonoBehaviour, IPoolable
 
     public void Init(Vector2 dir, float dmg, int pen, int bounce, int subCount, float subDmg, bool lockTarget = true)
     {
+        //指定子弹轨迹特效、命中等
+        HitEffect=BattleManager.Instance.hitEffectList[(int)bulletType];
+
+
         if (dir == Vector2.zero)
         {
             dir = Vector2.right;
